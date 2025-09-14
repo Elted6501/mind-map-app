@@ -1,8 +1,21 @@
 import React from 'react';
+import { Undo, Redo, RotateCcw, Trash2 } from 'lucide-react';
 import { useMindMapStore } from '../../store/mindMapStore';
-
 const CanvasToolbar: React.FC = () => {
   const { canvasState, currentMindMap, selectedNodes, actions } = useMindMapStore();
+
+  const handleDeleteNodes = () => {
+    // Use the exact same logic as keyboard delete in Canvas.tsx
+    const activeElement = document.activeElement;
+    const isEditingText = 
+      activeElement?.tagName === 'INPUT' || 
+      activeElement?.tagName === 'TEXTAREA' ||
+      activeElement?.getAttribute('contenteditable') === 'true';
+      
+    if (selectedNodes.length > 0 && !isEditingText) {
+      actions.deleteNode(selectedNodes);
+    }
+  };
 
   const handleCreateNode = () => {
     // Create node at center of visible canvas
@@ -47,8 +60,31 @@ const CanvasToolbar: React.FC = () => {
       top-2 right-2 flex flex-col gap-1 p-1
       sm:top-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:flex-row sm:gap-2 sm:p-2 sm:right-auto
       bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-200 z-10 
-      max-h-[50vh] overflow-y-auto sm:max-h-none sm:overflow-y-visible sm:max-w-[90vw] sm:overflow-x-auto">
+      max-h-[50vh] overflow-y-auto sm:max-h-none sm:overflow-y-visible sm:max-w-[95vw] sm:overflow-x-auto">
       
+      {/* History Actions */}
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-1">
+        <button
+          onClick={actions.undo}
+          className="p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center disabled:text-gray-400 disabled:cursor-not-allowed"
+          title="Undo"
+          disabled={!actions.canUndo()}
+        >
+          <Undo className="w-3 h-3 sm:w-4 sm:h-4" />
+        </button>
+        <button
+          onClick={actions.redo}
+          className="p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center disabled:text-gray-400 disabled:cursor-not-allowed"
+          title="Redo"
+          disabled={!actions.canRedo()}
+        >
+          <Redo className="w-3 h-3 sm:w-4 sm:h-4" />
+        </button>
+      </div>
+
+      {/* Divider */}
+      <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6"></div>
+
       {/* Add Node */}
       <button
         onClick={handleCreateNode}
@@ -59,7 +95,7 @@ const CanvasToolbar: React.FC = () => {
         <span className="hidden md:inline">Add Node</span>
       </button>
 
-      {/* Divider - Horizontal on mobile, Vertical on desktop */}
+      {/* Divider */}
       <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6"></div>
 
       {/* Zoom Controls */}
@@ -81,40 +117,45 @@ const CanvasToolbar: React.FC = () => {
         >
           🔍+
         </button>
+        <button
+          onClick={actions.resetZoom}
+          className="p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center"
+          title="Reset Zoom"
+        >
+          <RotateCcw className="w-3 h-3 sm:w-4 sm:h-4" />
+        </button>
       </div>
 
       {/* Fit to Screen */}
       <button
         onClick={handleZoomToFit}
-        className="hidden sm:block p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target"
+        className="p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center"
         title="Fit to Screen"
       >
         📐
       </button>
 
-      {/* Divider - Horizontal on mobile, Vertical on desktop */}
+      {/* Divider */}
       <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6"></div>
 
       {/* Delete Selected */}
       {selectedNodes.length > 0 && (
         <button
-          onClick={() => actions.deleteNode(selectedNodes)}
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+          }}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleDeleteNodes();
+          }}
           className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center"
           title={`Delete ${selectedNodes.length} selected node(s)`}
         >
-          🗑️
+          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
         </button>
       )}
-
-      {/* Save */}
-      <button
-        onClick={actions.saveMindMap}
-        className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors touch-target whitespace-nowrap min-w-[2.5rem] sm:min-w-auto"
-  title="Save Mind Mapping"
-      >
-        <span>💾</span>
-        <span className="hidden md:inline">Save</span>
-      </button>
     </div>
   );
 };

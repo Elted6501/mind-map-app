@@ -9,7 +9,7 @@ const PropertyPanel: React.FC = () => {
     : null;
 
   return (
-    <div className="h-full bg-gray-50 border-l border-gray-200 p-4">
+    <div className="h-full bg-white/90 backdrop-blur-sm border-l border-gray-200 p-4 rounded-xl shadow-md">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Properties</h2>
 
       {selectedNode ? (

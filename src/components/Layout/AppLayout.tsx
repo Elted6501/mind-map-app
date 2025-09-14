@@ -27,7 +27,7 @@ const AppLayout: React.FC = () => {
 
       {/* Desktop Sidebar */}
       {sidebarOpen && (
-        <div className="hidden lg:block w-80 xl:w-80 lg:w-64">
+        <div className="hidden lg:block w-80">
           <Sidebar />
         </div>
       )}
@@ -39,7 +39,7 @@ const AppLayout: React.FC = () => {
 
         {/* Canvas Area */}
         <div className="flex-1 relative overflow-hidden">
-          <Canvas />
+          <Canvas propertyPanelOpen={propertyPanelOpen} />
         </div>
       </div>
 
@@ -60,7 +60,7 @@ const AppLayout: React.FC = () => {
 
       {/* Desktop Property Panel */}
       {propertyPanelOpen && (
-        <div className="hidden lg:block w-80 xl:w-80 lg:w-64">
+        <div className="hidden lg:block w-80">
           <PropertyPanel />
         </div>
       )}

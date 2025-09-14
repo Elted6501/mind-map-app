@@ -52,23 +52,15 @@ export async function getAuthenticatedUser(request: NextRequest) {
   try {
     const authorization = request.headers.get('authorization');
     
-    console.log('Authorization header:', authorization ? 'Present' : 'Missing');
-    
     if (!authorization || !authorization.startsWith('Bearer ')) {
-      console.log('Auth header details:', { 
-        hasAuth: !!authorization, 
-        startsWithBearer: authorization?.startsWith('Bearer ') 
-      });
       throw new Error('No token provided');
     }
 
     const token = authorization.substring(7);
-    console.log('Token extracted, length:', token?.length || 0);
     
     let decoded: TokenPayload;
     try {
       decoded = verifyToken(token);
-      console.log('Token verification successful for user:', decoded.userId);
     } catch (error) {
       console.error('Token verification failed:', error);
       throw new Error('Invalid or expired token');
@@ -78,11 +70,9 @@ export async function getAuthenticatedUser(request: NextRequest) {
     const user = await User.findById(decoded.userId).select('-password');
     
     if (!user) {
-      console.log('User not found in database for ID:', decoded.userId);
       throw new Error('User not found');
     }
 
-    console.log('Authentication successful for user:', user.email);
     return user;
   } catch (error) {
     console.error('Authentication error:', error);

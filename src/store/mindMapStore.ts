@@ -68,6 +68,7 @@ interface MindMapStore {
     undo: () => void;
     redo: () => void;
     saveSnapshot: (action: string) => void;
+    addToHistory: (action: string) => void;
     canUndo: () => boolean;
     canRedo: () => boolean;
     
@@ -108,7 +109,6 @@ export const useMindMapStore = create<MindMapStore>()(
           // Check if user is authenticated before making API calls
           const { AuthService } = await import('@/services/authService');
           if (!AuthService.isAuthenticated()) {
-            console.log('Cannot load mind maps - user not authenticated');
             set({ 
               loading: false, 
               error: 'Authentication required' 
@@ -273,6 +273,9 @@ export const useMindMapStore = create<MindMapStore>()(
           const state = get();
           if (!state.currentMindMap) return;
 
+          // Save current state to history before making changes
+          state.actions.addToHistory('Create Node');
+
           const newNode: Node = {
             id: crypto.randomUUID(),
             text,
@@ -307,22 +310,31 @@ export const useMindMapStore = create<MindMapStore>()(
         },
 
         updateNode: (nodeId: string, updates: Partial<Node>) => {
+          const state = get();
+          if (!state.currentMindMap) return;
+
+          // Only save to history for meaningful updates (not just position changes during dragging)
+          if (updates.text !== undefined || updates.style !== undefined || updates.type !== undefined) {
+            state.actions.addToHistory('Update Node');
+          }
+
           set(state => ({
             currentMindMap: state.currentMindMap ? {
               ...state.currentMindMap,
               nodes: state.currentMindMap.nodes.map(node =>
-                node.id === nodeId
+                node.id === nodeId 
                   ? { ...node, ...updates, updatedAt: new Date() }
                   : node
               ),
               updatedAt: new Date(),
             } : null
           }));
-        },
-
-        deleteNode: (nodeIds: string[]) => {
+        },        deleteNode: (nodeIds: string[]) => {
           const state = get();
           if (!state.currentMindMap) return;
+
+          // Save current state to history before making changes
+          state.actions.addToHistory('Delete Node');
 
           set(state => ({
             currentMindMap: state.currentMindMap ? {
@@ -338,6 +350,12 @@ export const useMindMapStore = create<MindMapStore>()(
         },
 
         moveNodes: (movements: NodeMovement[]) => {
+          const state = get();
+          if (!state.currentMindMap) return;
+          
+          // Save to history for node movements (this will be called when dragging ends)
+          state.actions.addToHistory('Move Nodes');
+          
           set(state => ({
             currentMindMap: state.currentMindMap ? {
               ...state.currentMindMap,
@@ -355,6 +373,9 @@ export const useMindMapStore = create<MindMapStore>()(
         duplicateNode: (nodeId: string) => {
           const state = get();
           if (!state.currentMindMap) return;
+
+          // Save current state to history before making changes
+          state.actions.addToHistory('Duplicate Node');
 
           const originalNode = state.currentMindMap.nodes.find(n => n.id === nodeId);
           if (!originalNode) return;
@@ -392,6 +413,9 @@ export const useMindMapStore = create<MindMapStore>()(
 
           if (exists) return;
 
+          // Save current state to history before making changes
+          state.actions.addToHistory('Create Connection');
+
           const newConnection: Connection = {
             id: crypto.randomUUID(),
             fromNodeId,
@@ -417,6 +441,12 @@ export const useMindMapStore = create<MindMapStore>()(
         },
 
         deleteConnection: (connectionId: string) => {
+          const state = get();
+          if (!state.currentMindMap) return;
+
+          // Save current state to history before making changes
+          state.actions.addToHistory('Delete Connection');
+
           set(state => ({
             currentMindMap: state.currentMindMap ? {
               ...state.currentMindMap,
@@ -471,12 +501,77 @@ export const useMindMapStore = create<MindMapStore>()(
           // TODO: Implement history snapshots when needed
         },
 
+        addToHistory: (action: string) => {
+          const { currentMindMap, history, historyIndex } = get();
+          if (!currentMindMap) return;
+
+          // Create a deep copy of the current mind map state
+          const snapshot: MindMapSnapshot = {
+            mindMap: JSON.parse(JSON.stringify(currentMindMap)),
+            timestamp: new Date(),
+            action
+          };
+
+          // If we're not at the end of history, remove everything after current index
+          let newHistory = history.slice(0, historyIndex + 1);
+          
+          // Add the new snapshot
+          newHistory.push(snapshot);
+          
+          // Limit history size to prevent memory issues (keep last 50 actions)
+          const MAX_HISTORY_SIZE = 50;
+          if (newHistory.length > MAX_HISTORY_SIZE) {
+            newHistory = newHistory.slice(-MAX_HISTORY_SIZE);
+          }
+
+          set({
+            history: newHistory,
+            historyIndex: newHistory.length - 1
+          });
+        },
+
         undo: () => {
-          // TODO: Implement undo
+          const { history, historyIndex, currentMindMap } = get();
+          
+          if (historyIndex <= 0 || !currentMindMap) return;
+
+          // Save current state before going back if this is the first undo
+          if (historyIndex === history.length - 1) {
+            const currentSnapshot: MindMapSnapshot = {
+              mindMap: JSON.parse(JSON.stringify(currentMindMap)),
+              timestamp: new Date(),
+              action: 'current_state'
+            };
+            
+            set({
+              history: [...history, currentSnapshot],
+              historyIndex: historyIndex
+            });
+          }
+
+          // Go back one step in history
+          const previousSnapshot = history[historyIndex - 1];
+          
+          set({
+            currentMindMap: JSON.parse(JSON.stringify(previousSnapshot.mindMap)),
+            historyIndex: historyIndex - 1,
+            selectedNodes: [] // Clear selection on undo
+          });
         },
 
         redo: () => {
-          // TODO: Implement redo
+          const { history, historyIndex } = get();
+          
+          if (historyIndex >= history.length - 1) return;
+
+          // Go forward one step in history
+          const nextSnapshot = history[historyIndex + 1];
+          
+          set({
+            currentMindMap: JSON.parse(JSON.stringify(nextSnapshot.mindMap)),
+            historyIndex: historyIndex + 1,
+            selectedNodes: [] // Clear selection on redo
+          });
         },
 
         canUndo: () => {

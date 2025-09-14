@@ -17,7 +17,7 @@ interface DragState {
   currentNodePos?: Point;  // Current position during drag (for live preview)
 }
 
-const Canvas: React.FC = () => {
+const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen = false }) => {
   const {
     currentMindMap,
     canvasState,
@@ -157,7 +157,7 @@ const Canvas: React.FC = () => {
         });
       }
     }
-  }, [currentMindMap, canvasState, selectedNodes, actions, connectionMode, handleFinishConnection]);
+  }, [isPanMode, currentMindMap, canvasState, actions, connectionMode, handleFinishConnection]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -251,7 +251,7 @@ const Canvas: React.FC = () => {
         startPos: dragState.currentPos
       }));
     }
-  }, [dragState, canvasState, connectionMode, actions, currentMindMap]);
+  }, [dragState, canvasState, connectionMode, actions]);
 
   const handleMouseUp = useCallback(() => {
     // If we were dragging a node, commit the final position to the store
@@ -278,8 +278,14 @@ const Canvas: React.FC = () => {
         setConnectionMode({ active: false });
         actions.clearSelection();
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        // Don't delete nodes if we're currently editing a node's text
-        if (selectedNodes.length > 0 && !editingNode) {
+        // Don't delete nodes if we're currently editing a node's text OR if focused on an input/textarea
+        const activeElement = document.activeElement;
+        const isEditingText = editingNode || 
+          activeElement?.tagName === 'INPUT' || 
+          activeElement?.tagName === 'TEXTAREA' ||
+          activeElement?.getAttribute('contenteditable') === 'true';
+          
+        if (selectedNodes.length > 0 && !isEditingText) {
           actions.deleteNode(selectedNodes);
         }
       } else if (e.key === ' ') {
@@ -545,8 +551,8 @@ const Canvas: React.FC = () => {
         )}
       </div>
 
-      {/* Minimap */}
-      <Minimap />
+      {/* Minimap - Hidden when property panel is open */}
+      {!propertyPanelOpen && <Minimap />}
     </div>
   );
 };
