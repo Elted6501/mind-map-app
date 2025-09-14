@@ -33,11 +33,16 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     console.error('Get mind maps error:', error);
     
-    if (error instanceof Error && error.message === 'Authentication failed') {
+    // Handle authentication errors specifically
+    if (error instanceof Error && (
+      error.message === 'No token provided' ||
+      error.message === 'Invalid or expired token' ||
+      error.message === 'User not found'
+    )) {
       return new Response(
         JSON.stringify({
           success: false,
-          error: 'Unauthorized access'
+          error: error.message
         }),
         { 
           status: 401,

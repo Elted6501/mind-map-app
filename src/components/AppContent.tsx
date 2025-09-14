@@ -13,6 +13,14 @@ const AppContent: React.FC = () => {
   const { currentMindMap, loading, error, actions } = useMindMapStore();
 
   const loadMindMaps = useCallback(async () => {
+    // Double check authentication before making API calls
+    if (!isAuthenticated || !user) {
+      console.log('Skipping mind map load - user not authenticated:', { isAuthenticated, user: !!user });
+      return;
+    }
+
+    console.log('Loading mind maps for authenticated user:', user.email);
+    
     try {
       // Load from backend
       await actions.loadAllMindMaps();
@@ -40,14 +48,18 @@ const AppContent: React.FC = () => {
     } catch (err) {
       console.error('Failed to load mind maps:', err);
     }
-  }, [actions]);
+  }, [actions, isAuthenticated, user]);
 
   useEffect(() => {
+    console.log('Authentication state changed:', { isAuthenticated, user: !!user, isLoading });
+    
     if (isAuthenticated && user) {
+      console.log('User is authenticated, loading mind maps...');
       // Clear any existing current mind map and load user's mind maps from backend
       useMindMapStore.setState({ currentMindMap: null });
       loadMindMaps();
-    } else if (!isAuthenticated) {
+    } else if (!isAuthenticated && !isLoading) {
+      console.log('User is not authenticated, loading local mind maps only');
       // Clear current mind map and only load from localStorage if not authenticated
       useMindMapStore.setState({ currentMindMap: null });
       const localMindMaps = safeLoadMindMapsFromStorage();
@@ -55,7 +67,7 @@ const AppContent: React.FC = () => {
         useMindMapStore.setState({ mindMaps: localMindMaps });
       }
     }
-  }, [isAuthenticated, user, loadMindMaps]);
+  }, [isAuthenticated, user, isLoading, loadMindMaps]);
 
   // Save mind maps to localStorage whenever they change (fallback for offline use)
   useEffect(() => {

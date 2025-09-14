@@ -105,6 +105,17 @@ export const useMindMapStore = create<MindMapStore>()(
       actions: {
         // Mind map operations
         loadAllMindMaps: async () => {
+          // Check if user is authenticated before making API calls
+          const { AuthService } = await import('@/services/authService');
+          if (!AuthService.isAuthenticated()) {
+            console.log('Cannot load mind maps - user not authenticated');
+            set({ 
+              loading: false, 
+              error: 'Authentication required' 
+            });
+            return;
+          }
+
           set({ loading: true, error: null });
           
           try {
