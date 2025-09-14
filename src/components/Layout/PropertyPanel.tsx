@@ -2,7 +2,7 @@ import React from 'react';
 import { useMindMapStore } from '../../store/mindMapStore';
 
 const PropertyPanel: React.FC = () => {
-  const { selectedNodes, currentMindMap } = useMindMapStore();
+  const { selectedNodes, currentMindMap, actions } = useMindMapStore();
 
   const selectedNode = selectedNodes.length === 1 
     ? currentMindMap?.nodes.find(node => node.id === selectedNodes[0])
@@ -21,6 +21,7 @@ const PropertyPanel: React.FC = () => {
             <input
               type="text"
               value={selectedNode.text}
+              onChange={(e) => actions.updateNode(selectedNode.id, { text: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               placeholder="Enter node text..."
             />
@@ -33,6 +34,9 @@ const PropertyPanel: React.FC = () => {
             <input
               type="color"
               value={selectedNode.style.backgroundColor || '#3B82F6'}
+              onChange={(e) => actions.updateNode(selectedNode.id, { 
+                style: { ...selectedNode.style, backgroundColor: e.target.value }
+              })}
               className="w-full h-10 border border-gray-300 rounded-md"
             />
           </div>

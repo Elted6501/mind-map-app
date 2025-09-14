@@ -62,9 +62,10 @@ const Canvas: React.FC = () => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
+    // Use raw screen coordinates for dragging - will convert to world coordinates in move handler
     const point = {
-      x: (e.clientX - rect.left - canvasState.panX) / canvasState.zoom,
-      y: (e.clientY - rect.top - canvasState.panY) / canvasState.zoom
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
     };
 
     // Handle connection mode
@@ -95,23 +96,30 @@ const Canvas: React.FC = () => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const point = {
-      x: (e.clientX - rect.left - canvasState.panX) / canvasState.zoom,
-      y: (e.clientY - rect.top - canvasState.panY) / canvasState.zoom
+    // Transform mouse coordinates to world space for hit detection
+    const screenPoint = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+    
+    // Convert screen point to world coordinates for hit detection
+    const worldPoint = {
+      x: (screenPoint.x - canvasState.panX) / canvasState.zoom,
+      y: (screenPoint.y - canvasState.panY) / canvasState.zoom
     };
 
     // Screen coordinates for canvas panning
-    const screenPoint = {
+    const screenCoords = {
       x: e.clientX,
       y: e.clientY
     };
 
-    // Check if clicking on a node
+    // Check if clicking on a node using world coordinates
     const clickedNode = currentMindMap?.nodes.find(node => 
-      point.x >= node.x && 
-      point.x <= node.x + node.width &&
-      point.y >= node.y && 
-      point.y <= node.y + node.height
+      worldPoint.x >= node.x && 
+      worldPoint.x <= node.x + node.width &&
+      worldPoint.y >= node.y && 
+      worldPoint.y <= node.y + node.height
     );
 
     if (clickedNode) {
@@ -129,8 +137,8 @@ const Canvas: React.FC = () => {
       setDragState({
         isDragging: true,
         dragType: 'node',
-        startPos: point,
-        currentPos: point,
+        startPos: screenPoint,
+        currentPos: screenPoint,
         draggedNodeId: clickedNode.id
       });
     } else {
@@ -150,8 +158,8 @@ const Canvas: React.FC = () => {
         setDragState({
           isDragging: true,
           dragType: 'canvas',
-          startPos: screenPoint,
-          currentPos: screenPoint
+          startPos: screenCoords,
+          currentPos: screenCoords
         });
       }
     }
@@ -161,34 +169,43 @@ const Canvas: React.FC = () => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const point = {
-      x: (e.clientX - rect.left - canvasState.panX) / canvasState.zoom,
-      y: (e.clientY - rect.top - canvasState.panY) / canvasState.zoom
+    // Screen coordinates relative to canvas
+    const screenPoint = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
     };
 
     // Screen coordinates for canvas panning
-    const screenPoint = {
+    const screenCoords = {
       x: e.clientX,
       y: e.clientY
     };
 
-    // Update connection mode cursor position
+    // Update connection mode cursor position (needs world coordinates)
     if (connectionMode.active) {
-      setConnectionMode(prev => ({ ...prev, currentPos: point }));
+      const worldPoint = {
+        x: (screenPoint.x - canvasState.panX) / canvasState.zoom,
+        y: (screenPoint.y - canvasState.panY) / canvasState.zoom
+      };
+      setConnectionMode(prev => ({ ...prev, currentPos: worldPoint }));
     }
 
     if (!dragState.isDragging) return;
 
     if (dragState.dragType === 'canvas') {
-      setDragState(prev => ({ ...prev, currentPos: screenPoint }));
+      setDragState(prev => ({ ...prev, currentPos: screenCoords }));
     } else {
-      setDragState(prev => ({ ...prev, currentPos: point }));
+      setDragState(prev => ({ ...prev, currentPos: screenPoint }));
     }
 
     if (dragState.dragType === 'node' && dragState.draggedNodeId) {
-      // Update node position using relative movement
-      const deltaX = point.x - dragState.startPos.x;
-      const deltaY = point.y - dragState.startPos.y;
+      // Calculate delta in screen space, then convert to world space
+      const deltaScreenX = screenPoint.x - dragState.startPos.x;
+      const deltaScreenY = screenPoint.y - dragState.startPos.y;
+      
+      // Convert screen delta to world delta
+      const deltaWorldX = deltaScreenX / canvasState.zoom;
+      const deltaWorldY = deltaScreenY / canvasState.zoom;
       
       const currentNode = currentMindMap?.nodes.find(n => n.id === dragState.draggedNodeId);
       if (currentNode) {
@@ -203,8 +220,8 @@ const Canvas: React.FC = () => {
         const originalPos = dragState.originalNodePos || { x: currentNode.x, y: currentNode.y };
         
         actions.updateNode(dragState.draggedNodeId, {
-          x: originalPos.x + deltaX,
-          y: originalPos.y + deltaY
+          x: originalPos.x + deltaWorldX,
+          y: originalPos.y + deltaWorldY
         });
       }
     } else if (dragState.dragType === 'canvas') {
@@ -261,7 +278,8 @@ const Canvas: React.FC = () => {
         setConnectionMode({ active: false });
         actions.clearSelection();
       } else if (e.key === 'Delete' || e.key === 'Backspace') {
-        if (selectedNodes.length > 0) {
+        // Don't delete nodes if we're currently editing a node's text
+        if (selectedNodes.length > 0 && !editingNode) {
           actions.deleteNode(selectedNodes);
         }
       } else if (e.key === ' ') {
@@ -282,31 +300,37 @@ const Canvas: React.FC = () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
     };
-  }, [selectedNodes, actions]);
+  }, [selectedNodes, actions, editingNode]);
 
   // Handle double-click to create nodes
   const handleDoubleClick = useCallback((e: React.MouseEvent) => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    const point = {
-      x: (e.clientX - rect.left - canvasState.panX) / canvasState.zoom,
-      y: (e.clientY - rect.top - canvasState.panY) / canvasState.zoom
+    // Convert screen coordinates to world coordinates accounting for transform
+    const screenPoint = {
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    };
+    
+    const worldPoint = {
+      x: (screenPoint.x - canvasState.panX) / canvasState.zoom,
+      y: (screenPoint.y - canvasState.panY) / canvasState.zoom
     };
 
     // Check if double-clicking on a node to edit
     const clickedNode = currentMindMap?.nodes.find(node => 
-      point.x >= node.x && 
-      point.x <= node.x + node.width &&
-      point.y >= node.y && 
-      point.y <= node.y + node.height
+      worldPoint.x >= node.x && 
+      worldPoint.x <= node.x + node.width &&
+      worldPoint.y >= node.y && 
+      worldPoint.y <= node.y + node.height
     );
 
     if (clickedNode) {
       actions.startEditingNode(clickedNode.id);
     } else {
       // Create a new node
-      actions.createNode(null, point, 'New Node');
+      actions.createNode(null, worldPoint, 'New Node');
     }
   }, [currentMindMap, canvasState, actions]);
 
@@ -332,12 +356,12 @@ const Canvas: React.FC = () => {
         node={node}
         isSelected={isSelected}
         isEditing={isEditing}
-        zoom={canvasState.zoom}
+        zoom={1} // Always 1 since scaling is handled by parent container
         onStartConnection={handleStartConnection}
         onNodeMouseDown={handleNodeMouseDown}
       />
     );
-  }, [selectedNodes, editingNode, canvasState.zoom, handleStartConnection, handleNodeMouseDown]);
+  }, [selectedNodes, editingNode, handleStartConnection, handleNodeMouseDown]);
 
   // Render a connection
   const renderConnection = useCallback((connection: Connection) => {
@@ -352,10 +376,10 @@ const Canvas: React.FC = () => {
         connection={connection}
         fromNode={fromNode}
         toNode={toNode}
-        zoom={canvasState.zoom}
+        zoom={1} // Always 1 since scaling is handled by parent container
       />
     );
-  }, [currentMindMap, canvasState.zoom]);
+  }, [currentMindMap]);
 
   if (!currentMindMap) {
     return (
@@ -389,7 +413,8 @@ const Canvas: React.FC = () => {
       <div
         className="absolute inset-0"
         style={{
-          transform: `translate(${canvasState.panX}px, ${canvasState.panY}px)`
+          transform: `translate(${canvasState.panX}px, ${canvasState.panY}px) scale(${canvasState.zoom})`,
+          transformOrigin: 'top left'
         }}
       >
         {/* Grid background */}
@@ -401,7 +426,7 @@ const Canvas: React.FC = () => {
                 linear-gradient(to right, #e5e7eb 1px, transparent 1px),
                 linear-gradient(to bottom, #e5e7eb 1px, transparent 1px)
               `,
-              backgroundSize: `${canvasState.gridSize * canvasState.zoom}px ${canvasState.gridSize * canvasState.zoom}px`
+              backgroundSize: `${canvasState.gridSize}px ${canvasState.gridSize}px`
             }}
           />
         )}
@@ -411,9 +436,7 @@ const Canvas: React.FC = () => {
           className="absolute inset-0 pointer-events-none"
           style={{
             width: '100%',
-            height: '100%',
-            transform: `scale(${canvasState.zoom})`,
-            transformOrigin: 'top left'
+            height: '100%'
           }}
         >
           {currentMindMap.connections.map(renderConnection)}
