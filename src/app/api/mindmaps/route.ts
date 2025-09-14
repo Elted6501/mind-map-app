@@ -117,7 +117,7 @@ export async function POST(request: NextRequest) {
       }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Create mind map error:', error);
     
     if (error instanceof Error && error.message === 'Authentication failed') {
@@ -134,8 +134,9 @@ export async function POST(request: NextRequest) {
     }
     
     // Handle mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map((err: any) => err.message);
+    if (error && typeof error === 'object' && 'name' in error && error.name === 'ValidationError' && 'errors' in error) {
+      const validationError = error as unknown as { errors: Record<string, { message: string }> };
+      const errors = Object.values(validationError.errors).map((err) => err.message);
       return new Response(
         JSON.stringify({
           success: false,

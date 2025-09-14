@@ -1,5 +1,14 @@
 import { MindMap } from '../types';
 
+interface UserPreferences {
+  theme?: 'light' | 'dark';
+  defaultZoom?: number;
+  gridSize?: number;
+  showGrid?: boolean;
+  autoSave?: boolean;
+  [key: string]: unknown;
+}
+
 export class LocalStorageService {
   private static instance: LocalStorageService;
 
@@ -64,7 +73,7 @@ export class LocalStorageService {
   }
 
   // Preferences
-  savePreferences(preferences: any): void {
+  savePreferences(preferences: UserPreferences): void {
     try {
       localStorage.setItem('user_preferences', JSON.stringify(preferences));
     } catch (error) {
@@ -73,7 +82,7 @@ export class LocalStorageService {
     }
   }
 
-  loadPreferences(): any {
+  loadPreferences(): UserPreferences {
     try {
       const stored = localStorage.getItem('user_preferences');
       return stored ? JSON.parse(stored) : {};

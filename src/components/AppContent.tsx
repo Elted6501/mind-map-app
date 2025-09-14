@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import LoadingSpinner from '@/components/UI/LoadingSpinner';
 import WelcomeScreen from '@/components/UI/WelcomeScreen';
@@ -12,42 +12,40 @@ const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { currentMindMap, loading, error, actions } = useMindMapStore();
 
+  const loadMindMaps = useCallback(async () => {
+    try {
+      // Load from backend
+      await actions.loadAllMindMaps();
+      
+      // Also load from localStorage and merge
+      const savedMindMaps = localStorage.getItem('mind_maps');
+      if (savedMindMaps) {
+        try {
+          const localMindMaps = safeLoadMindMapsFromStorage();
+          const currentBackendMaps = useMindMapStore.getState().mindMaps;
+          
+          // Merge unique mind maps (avoid duplicates by ID)
+          const backendIds = new Set(currentBackendMaps.map((m: { id: string }) => m.id));
+          const uniqueLocalMaps = localMindMaps.filter((m: { id: string }) => !backendIds.has(m.id));
+          
+          if (uniqueLocalMaps.length > 0) {
+            useMindMapStore.setState({ 
+              mindMaps: [...currentBackendMaps, ...uniqueLocalMaps] 
+            });
+          }
+        } catch (err) {
+          console.error('Failed to load saved mind maps:', err);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load mind maps:', err);
+    }
+  }, [actions]);
+
   useEffect(() => {
     if (isAuthenticated && user) {
       // Clear any existing current mind map and load user's mind maps from backend
       useMindMapStore.setState({ currentMindMap: null });
-      
-      // Load both backend and localStorage mind maps
-      const loadMindMaps = async () => {
-        try {
-          // Load from backend
-          await actions.loadAllMindMaps();
-          
-          // Also load from localStorage and merge
-          const savedMindMaps = localStorage.getItem('mind_maps');
-          if (savedMindMaps) {
-            try {
-              const localMindMaps = safeLoadMindMapsFromStorage();
-              const currentBackendMaps = useMindMapStore.getState().mindMaps;
-              
-              // Merge unique mind maps (avoid duplicates by ID)
-              const backendIds = new Set(currentBackendMaps.map((m: any) => m.id));
-              const uniqueLocalMaps = localMindMaps.filter((m: any) => !backendIds.has(m.id));
-              
-              if (uniqueLocalMaps.length > 0) {
-                useMindMapStore.setState({ 
-                  mindMaps: [...currentBackendMaps, ...uniqueLocalMaps] 
-                });
-              }
-            } catch (err) {
-              console.error('Failed to load saved mind maps:', err);
-            }
-          }
-        } catch (err) {
-          console.error('Failed to load mind maps:', err);
-        }
-      };
-      
       loadMindMaps();
     } else if (!isAuthenticated) {
       // Clear current mind map and only load from localStorage if not authenticated
@@ -57,7 +55,7 @@ const AppContent: React.FC = () => {
         useMindMapStore.setState({ mindMaps: localMindMaps });
       }
     }
-  }, [isAuthenticated, user]); // Removed 'actions' dependency
+  }, [isAuthenticated, user, loadMindMaps]);
 
   // Save mind maps to localStorage whenever they change (fallback for offline use)
   useEffect(() => {
@@ -104,7 +102,7 @@ const AppContent: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <div className="mind-map-container">
+      <div className="mind-map-container h-full">
         {currentMindMap ? (
           <AppLayout />
         ) : (

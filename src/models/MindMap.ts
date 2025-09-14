@@ -22,7 +22,7 @@ export interface INode {
     shape: 'rectangle' | 'circle' | 'diamond' | 'hexagon';
   };
   collapsed: boolean;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -221,6 +221,7 @@ MindMapSchema.virtual('connectionCount').get(function() {
 // Ensure virtual fields are serialized
 MindMapSchema.set('toJSON', {
   virtuals: true,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   transform: function(doc: any, ret: any) {
     // Convert ObjectId to string for JSON serialization
     if (ret.userId) {
@@ -231,6 +232,7 @@ MindMapSchema.set('toJSON', {
     if (!ret.collaborators) {
       ret.collaborators = [];
     } else if (Array.isArray(ret.collaborators)) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ret.collaborators = ret.collaborators.map((id: any) => id ? id.toString() : null).filter(Boolean);
     }
     

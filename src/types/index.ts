@@ -67,6 +67,14 @@ export interface ConnectionStyle {
   opacity: number;
 }
 
+export interface NodeMetadata {
+  attachments?: string[];
+  tags?: string[];
+  priority?: 'low' | 'medium' | 'high';
+  notes?: string;
+  [key: string]: unknown;
+}
+
 export interface Node {
   id: string;
   text: string;
@@ -80,7 +88,7 @@ export interface Node {
   type: NodeType;
   style: NodeStyle;
   collapsed: boolean;
-  metadata?: Record<string, any>;
+  metadata?: NodeMetadata;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -171,11 +179,19 @@ export interface ExportOptions {
   quality?: number;
 }
 
+export interface CollaborationOperationData {
+  position?: Point;
+  text?: string;
+  style?: Partial<NodeStyle>;
+  connections?: string[];
+  [key: string]: unknown;
+}
+
 export interface CollaborationOperation {
   type: 'create' | 'update' | 'delete' | 'move' | 'connect' | 'disconnect';
   nodeId?: string;
   connectionId?: string;
-  data?: any;
+  data?: CollaborationOperationData;
   timestamp: Date;
   userId: string;
 }
@@ -216,11 +232,18 @@ export interface PaginatedResponse<T> {
   hasMore: boolean;
 }
 
+export interface CollaborationEventData {
+  operation?: CollaborationOperation;
+  position?: Point;
+  selectedNodes?: string[];
+  [key: string]: unknown;
+}
+
 // Event types for real-time collaboration
 export interface CollaborationEvent {
   type: 'user_joined' | 'user_left' | 'operation' | 'cursor_move' | 'selection_change';
   userId: string;
-  data?: any;
+  data?: CollaborationEventData;
   timestamp: Date;
 }
 

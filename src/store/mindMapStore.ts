@@ -14,8 +14,6 @@ import {
   ConnectionType
 } from '../types';
 import { MindMapService } from '../services/mindMapService';
-import { localStorageService } from '../services/localStorageService';
-import { AuthService } from '../services/authService';
 
 interface MindMapStore {
   // Current state
@@ -87,8 +85,6 @@ interface MindMapStore {
     setError: (error: string | null) => void;
   };
 }
-
-const MAX_HISTORY_SIZE = 50;
 
 export const useMindMapStore = create<MindMapStore>()(
   devtools(
@@ -261,38 +257,176 @@ export const useMindMapStore = create<MindMapStore>()(
           });
         },
 
-        // Node operations - simplified for now
+        // Node operations
         createNode: (parentId: string | null, position: Point, text = 'New Node') => {
-          // TODO: Implement node creation
+          const state = get();
+          if (!state.currentMindMap) return;
+
+          const newNode: Node = {
+            id: crypto.randomUUID(),
+            text,
+            x: position.x,
+            y: position.y,
+            width: 150,
+            height: 60,
+            parentId,
+            children: [],
+            level: parentId ? (state.currentMindMap.nodes.find(n => n.id === parentId)?.level || 0) + 1 : 0,
+            type: parentId ? NodeType.BRANCH : NodeType.ROOT,
+            style: { ...DEFAULT_NODE_STYLE },
+            collapsed: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          set(state => ({
+            currentMindMap: state.currentMindMap ? {
+              ...state.currentMindMap,
+              nodes: [...state.currentMindMap.nodes, newNode],
+              updatedAt: new Date(),
+            } : null
+          }));
+
+          // Update parent's children array
+          if (parentId) {
+            state.actions.updateNode(parentId, {
+              children: [...(state.currentMindMap?.nodes.find(n => n.id === parentId)?.children || []), newNode.id]
+            });
+          }
         },
 
         updateNode: (nodeId: string, updates: Partial<Node>) => {
-          // TODO: Implement node update
+          set(state => ({
+            currentMindMap: state.currentMindMap ? {
+              ...state.currentMindMap,
+              nodes: state.currentMindMap.nodes.map(node =>
+                node.id === nodeId
+                  ? { ...node, ...updates, updatedAt: new Date() }
+                  : node
+              ),
+              updatedAt: new Date(),
+            } : null
+          }));
         },
 
         deleteNode: (nodeIds: string[]) => {
-          // TODO: Implement node deletion
+          const state = get();
+          if (!state.currentMindMap) return;
+
+          set(state => ({
+            currentMindMap: state.currentMindMap ? {
+              ...state.currentMindMap,
+              nodes: state.currentMindMap.nodes.filter(node => !nodeIds.includes(node.id)),
+              connections: state.currentMindMap.connections.filter(
+                conn => !nodeIds.includes(conn.fromNodeId) && !nodeIds.includes(conn.toNodeId)
+              ),
+              updatedAt: new Date(),
+            } : null,
+            selectedNodes: []
+          }));
         },
 
         moveNodes: (movements: NodeMovement[]) => {
-          // TODO: Implement node movement
+          set(state => ({
+            currentMindMap: state.currentMindMap ? {
+              ...state.currentMindMap,
+              nodes: state.currentMindMap.nodes.map(node => {
+                const movement = movements.find(m => m.nodeId === node.id);
+                return movement
+                  ? { ...node, x: movement.toX, y: movement.toY, updatedAt: new Date() }
+                  : node;
+              }),
+              updatedAt: new Date(),
+            } : null
+          }));
         },
 
         duplicateNode: (nodeId: string) => {
-          // TODO: Implement node duplication
+          const state = get();
+          if (!state.currentMindMap) return;
+
+          const originalNode = state.currentMindMap.nodes.find(n => n.id === nodeId);
+          if (!originalNode) return;
+
+          const newNode: Node = {
+            ...originalNode,
+            id: crypto.randomUUID(),
+            text: `${originalNode.text} (Copy)`,
+            x: originalNode.x + 20,
+            y: originalNode.y + 20,
+            children: [],
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          set(state => ({
+            currentMindMap: state.currentMindMap ? {
+              ...state.currentMindMap,
+              nodes: [...state.currentMindMap.nodes, newNode],
+              updatedAt: new Date(),
+            } : null
+          }));
         },
 
-        // Connection operations - simplified for now
+        // Connection operations
         createConnection: (fromNodeId: string, toNodeId: string) => {
-          // TODO: Implement connection creation
+          const state = get();
+          if (!state.currentMindMap) return;
+
+          // Check if connection already exists
+          const exists = state.currentMindMap.connections.some(
+            conn => (conn.fromNodeId === fromNodeId && conn.toNodeId === toNodeId) ||
+                   (conn.fromNodeId === toNodeId && conn.toNodeId === fromNodeId)
+          );
+
+          if (exists) return;
+
+          const newConnection: Connection = {
+            id: crypto.randomUUID(),
+            fromNodeId,
+            toNodeId,
+            type: ConnectionType.STRAIGHT,
+            style: {
+              color: '#6b7280',
+              width: 2,
+              style: 'solid',
+              opacity: 1,
+            },
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+
+          set(state => ({
+            currentMindMap: state.currentMindMap ? {
+              ...state.currentMindMap,
+              connections: [...state.currentMindMap.connections, newConnection],
+              updatedAt: new Date(),
+            } : null
+          }));
         },
 
         deleteConnection: (connectionId: string) => {
-          // TODO: Implement connection deletion
+          set(state => ({
+            currentMindMap: state.currentMindMap ? {
+              ...state.currentMindMap,
+              connections: state.currentMindMap.connections.filter(conn => conn.id !== connectionId),
+              updatedAt: new Date(),
+            } : null
+          }));
         },
 
         updateConnection: (connectionId: string, updates: Partial<Connection>) => {
-          // TODO: Implement connection update
+          set(state => ({
+            currentMindMap: state.currentMindMap ? {
+              ...state.currentMindMap,
+              connections: state.currentMindMap.connections.map(conn =>
+                conn.id === connectionId
+                  ? { ...conn, ...updates, updatedAt: new Date() }
+                  : conn
+              ),
+              updatedAt: new Date(),
+            } : null
+          }));
         },
 
         // Selection
@@ -322,8 +456,8 @@ export const useMindMapStore = create<MindMapStore>()(
         },
 
         // History - simplified for now
-        saveSnapshot: (action: string) => {
-          // TODO: Implement history snapshots
+        saveSnapshot: () => {
+          // TODO: Implement history snapshots when needed
         },
 
         undo: () => {

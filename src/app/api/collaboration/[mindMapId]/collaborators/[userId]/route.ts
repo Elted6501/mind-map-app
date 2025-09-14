@@ -6,7 +6,7 @@ import { verifyToken } from '@/lib/auth';
 // DELETE /api/collaboration/[mindMapId]/collaborators/[userId] - Remove a collaborator
 export async function DELETE(
   request: NextRequest,
-  context: { params: { mindMapId: string; userId: string } }
+  { params }: { params: Promise<{ mindMapId: string; userId: string }> }
 ) {
   try {
     await connectDB();
@@ -19,9 +19,12 @@ export async function DELETE(
       );
     }
 
+    // Await params if it's a Promise
+    const resolvedParams = await params;
+
     // Check if mind map exists and user has permission
     const mindMap = await MindMap.findOne({
-      _id: context.params.mindMapId,
+      _id: resolvedParams.mindMapId,
       userId: user.id, // Only owner can remove collaborators
     });
 
@@ -33,7 +36,7 @@ export async function DELETE(
     }
 
     // Check if the user is trying to remove themselves
-    if (context.params.userId === user.id) {
+    if (resolvedParams.userId === user.id) {
       return NextResponse.json(
         { success: false, error: 'You cannot remove yourself as the owner' },
         { status: 400 }
@@ -42,7 +45,7 @@ export async function DELETE(
 
     // Remove collaborator
     mindMap.collaborators = mindMap.collaborators.filter(
-      (collaboratorId: string) => collaboratorId.toString() !== context.params.userId
+      (collaboratorId: string) => collaboratorId.toString() !== resolvedParams.userId
     );
 
     await mindMap.save();
@@ -65,7 +68,7 @@ export async function DELETE(
 // PUT /api/collaboration/[mindMapId]/collaborators/[userId] - Update collaborator permissions
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ mindMapId: string; userId: string }> | { mindMapId: string; userId: string } }
+  { params }: { params: Promise<{ mindMapId: string; userId: string }> }
 ): Promise<NextResponse> {
   try {
     await connectDB();

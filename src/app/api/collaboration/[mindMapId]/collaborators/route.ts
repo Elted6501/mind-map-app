@@ -7,7 +7,7 @@ import { verifyToken } from '@/lib/auth';
 // GET /api/collaboration/[mindMapId]/collaborators - Get collaborators for a mind map
 export async function GET(
   request: NextRequest,
-  context: { params: { mindMapId: string } }
+  { params }: { params: Promise<{ mindMapId: string }> }
 ) {
   try {
     await connectDB();
@@ -20,8 +20,11 @@ export async function GET(
       );
     }
 
+    // Await params if it's a Promise
+    const resolvedParams = await params;
+
     const mindMap = await MindMap.findOne({
-      _id: context.params.mindMapId,
+      _id: resolvedParams.mindMapId,
       $or: [
         { userId: user.id },
         { collaborators: user.id }
@@ -57,7 +60,7 @@ export async function GET(
 // POST /api/collaboration/[mindMapId]/collaborators - Add a collaborator
 export async function POST(
   request: NextRequest,
-  context: { params: { mindMapId: string } }
+  { params }: { params: Promise<{ mindMapId: string }> }
 ) {
   try {
     await connectDB();
@@ -79,9 +82,12 @@ export async function POST(
       );
     }
 
+    // Await params if it's a Promise
+    const resolvedParams = await params;
+
     // Check if mind map exists and user has permission
     const mindMap = await MindMap.findOne({
-      _id: context.params.mindMapId,
+      _id: resolvedParams.mindMapId,
       userId: user.id, // Only owner can add collaborators
     });
 

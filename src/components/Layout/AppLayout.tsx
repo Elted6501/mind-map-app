@@ -9,28 +9,28 @@ const AppLayout: React.FC = () => {
   const { sidebarOpen, propertyPanelOpen } = useMindMapStore();
 
   return (
-    <div className="flex h-full">
-      {/* Sidebar */}
+    <div className="flex h-screen">
+      {/* Sidebar - responsive width */}
       {sidebarOpen && (
-        <div className="w-80 sidebar-panel">
+        <div className="w-80 lg:w-80 md:w-64 sm:w-56 sidebar-panel">
           <Sidebar />
         </div>
       )}
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col min-w-0">
         {/* Header */}
         <Header />
 
         {/* Canvas Area */}
-        <div className="flex-1 relative">
+        <div className="flex-1 relative overflow-hidden">
           <Canvas />
         </div>
       </div>
 
-      {/* Property Panel */}
+      {/* Property Panel - responsive width */}
       {propertyPanelOpen && (
-        <div className="w-80 property-panel">
+        <div className="w-80 lg:w-80 md:w-64 sm:w-56 property-panel">
           <PropertyPanel />
         </div>
       )}

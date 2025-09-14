@@ -66,6 +66,8 @@ UserSchema.virtual('mindMapsCount', {
 UserSchema.set('toJSON', {
   virtuals: true,
   transform: function(doc, ret) {
+    // Remove password from serialized output
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { password, ...userWithoutPassword } = ret;
     return userWithoutPassword;
   },

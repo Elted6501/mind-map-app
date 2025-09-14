@@ -3,6 +3,16 @@ import dbConnect from '@/lib/mongodb';
 import { User } from '@/models/User';
 import { generateToken } from '@/lib/auth/jwt';
 
+interface MongooseError extends Error {
+  name: string;
+  errors?: Record<string, { message: string }>;
+  code?: number;
+}
+
+interface ValidationError {
+  message: string;
+}
+
 export async function POST(request: NextRequest) {
   try {
     await dbConnect();
@@ -79,12 +89,14 @@ export async function POST(request: NextRequest) {
       }
     );
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Registration error:', error);
     
+    const mongoError = error as MongooseError;
+    
     // Handle mongoose validation errors
-    if (error.name === 'ValidationError') {
-      const errors = Object.values(error.errors).map((err: any) => err.message);
+    if (mongoError.name === 'ValidationError') {
+      const errors = Object.values(mongoError.errors || {}).map((err: ValidationError) => err.message);
       return new Response(
         JSON.stringify({
           success: false,

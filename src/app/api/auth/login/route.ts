@@ -1,5 +1,4 @@
 import { NextRequest } from 'next/server';
-import bcryptjs from 'bcryptjs';
 import dbConnect from '@/lib/mongodb';
 import { User } from '@/models/User';
 import { generateToken } from '@/lib/auth/jwt';

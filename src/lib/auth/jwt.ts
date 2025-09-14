@@ -48,19 +48,19 @@ export async function getAuthenticatedUser(request: NextRequest) {
     }
 
     return user;
-  } catch (error) {
+  } catch {
     throw new Error('Authentication failed');
   }
 }
 
 export async function withAuth(
-  handler: (request: NextRequest, context: { params?: any; user: any }) => Promise<Response>
+  handler: (request: NextRequest, context: { params?: Record<string, unknown>; user: Record<string, unknown> }) => Promise<Response>
 ) {
-  return async (request: NextRequest, context?: { params?: any }) => {
+  return async (request: NextRequest, context?: { params?: Record<string, unknown> }) => {
     try {
       const user = await getAuthenticatedUser(request);
       return handler(request, { ...context, user });
-    } catch (error) {
+    } catch {
       return new Response(
         JSON.stringify({ 
           success: false, 

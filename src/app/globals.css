@@ -14,13 +14,60 @@
   }
 }
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: 'Inter', system-ui, sans-serif;
-  margin: 0;
-  padding: 0;
   overflow: hidden;
+}
+
+#root {
+  height: 100%;
+}
+
+/* Mobile-specific styles */
+@media (max-width: 768px) {
+  .sidebar-panel,
+  .property-panel {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: 50;
+    background: white;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  }
+  
+  .sidebar-panel {
+    left: 0;
+    transform: translateX(0);
+    width: 280px !important;
+  }
+  
+  .property-panel {
+    right: 0;
+    transform: translateX(0);
+    width: 280px !important;
+  }
+}
+
+/* Touch-friendly styles for mobile */
+@media (max-width: 768px) {
+  .touch-target {
+    min-height: 44px;
+    min-width: 44px;
+  }
+  
+  /* Larger touch targets for node handles */
+  .node-handle {
+    width: 20px !important;
+    height: 20px !important;
+  }
 }
 
 /* Custom scrollbar for webkit browsers */

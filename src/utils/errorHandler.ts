@@ -6,7 +6,7 @@ export interface ErrorContext {
   mindMapId?: string;
   nodeId?: string;
   action?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export interface ErrorReport {
@@ -40,13 +40,15 @@ export function reportError(error: Error, context?: ErrorContext): void {
 }
 
 // Handle API errors
-export function handleApiError(error: any, context?: ErrorContext): string {
+export function handleApiError(error: unknown, context?: ErrorContext): string {
   let message = 'An unexpected error occurred';
 
-  if (error?.response?.data?.error) {
-    message = error.response.data.error;
-  } else if (error?.message) {
-    message = error.message;
+  const apiError = error as { response?: { data?: { error?: string } }; message?: string };
+
+  if (apiError?.response?.data?.error) {
+    message = apiError.response.data.error;
+  } else if (apiError?.message) {
+    message = apiError.message;
   } else if (typeof error === 'string') {
     message = error;
   }
@@ -98,11 +100,12 @@ export async function retryWithBackoff<T>(
 
 // Error boundary helper for React components
 export function createErrorHandler(componentName: string) {
-  return (error: Error, errorInfo: any) => {
+  return (error: Error, errorInfo: unknown) => {
+    const errorInfoObj = errorInfo as { componentStack?: string };
     reportError(error, {
       context: 'React Error Boundary',
       component: componentName,
-      errorInfo: errorInfo?.componentStack || 'No component stack available'
+      errorInfo: errorInfoObj?.componentStack || 'No component stack available'
     });
   };
 }

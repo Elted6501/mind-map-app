@@ -3,45 +3,47 @@
 import { MindMap, DEFAULT_CANVAS_STATE } from '../types';
 
 // Ensure mind map has all required properties with proper defaults
-export const sanitizeMindMap = (mindMap: any): MindMap => {
+export const sanitizeMindMap = (mindMap: unknown): MindMap => {
   if (!mindMap || typeof mindMap !== 'object') {
     throw new Error('Invalid mind map data');
   }
 
+  const mindMapObj = mindMap as Record<string, unknown>;
+
   return {
-    id: mindMap.id || '',
-    title: mindMap.title || 'Untitled',
-    description: mindMap.description || '',
-    createdAt: mindMap.createdAt ? new Date(mindMap.createdAt) : new Date(),
-    updatedAt: mindMap.updatedAt ? new Date(mindMap.updatedAt) : new Date(),
-    userId: mindMap.userId || 'unknown',
-    isPublic: Boolean(mindMap.isPublic),
-    nodes: Array.isArray(mindMap.nodes) ? mindMap.nodes : [],
-    connections: Array.isArray(mindMap.connections) ? mindMap.connections : [],
-    canvas: mindMap.canvas && typeof mindMap.canvas === 'object' 
+    id: typeof mindMapObj.id === 'string' ? mindMapObj.id : '',
+    title: typeof mindMapObj.title === 'string' ? mindMapObj.title : 'Untitled',
+    description: typeof mindMapObj.description === 'string' ? mindMapObj.description : '',
+    createdAt: mindMapObj.createdAt ? new Date(mindMapObj.createdAt as string) : new Date(),
+    updatedAt: mindMapObj.updatedAt ? new Date(mindMapObj.updatedAt as string) : new Date(),
+    userId: typeof mindMapObj.userId === 'string' ? mindMapObj.userId : 'unknown',
+    isPublic: Boolean(mindMapObj.isPublic),
+    nodes: Array.isArray(mindMapObj.nodes) ? mindMapObj.nodes : [],
+    connections: Array.isArray(mindMapObj.connections) ? mindMapObj.connections : [],
+    canvas: mindMapObj.canvas && typeof mindMapObj.canvas === 'object' 
       ? {
           ...DEFAULT_CANVAS_STATE,
-          ...mindMap.canvas,
-          selectedNodes: Array.isArray(mindMap.canvas.selectedNodes) 
-            ? mindMap.canvas.selectedNodes 
+          ...(mindMapObj.canvas as Record<string, unknown>),
+          selectedNodes: Array.isArray((mindMapObj.canvas as Record<string, unknown>).selectedNodes) 
+            ? (mindMapObj.canvas as Record<string, unknown>).selectedNodes as string[]
             : [],
-          editingNode: mindMap.canvas.editingNode || null,
+          editingNode: (mindMapObj.canvas as Record<string, unknown>).editingNode as string | null || null,
         }
       : { ...DEFAULT_CANVAS_STATE },
-    version: typeof mindMap.version === 'number' ? mindMap.version : 1,
-    tags: Array.isArray(mindMap.tags) ? mindMap.tags : [],
-    collaborators: Array.isArray(mindMap.collaborators) ? mindMap.collaborators : [],
+    version: typeof mindMapObj.version === 'number' ? mindMapObj.version : 1,
+    tags: Array.isArray(mindMapObj.tags) ? mindMapObj.tags : [],
+    collaborators: Array.isArray(mindMapObj.collaborators) ? mindMapObj.collaborators : [],
   };
 };
 
 // Clean up potentially corrupted mind map arrays
-export const sanitizeMindMapArray = (mindMaps: any[]): MindMap[] => {
+export const sanitizeMindMapArray = (mindMaps: unknown[]): MindMap[] => {
   if (!Array.isArray(mindMaps)) {
     return [];
   }
 
   return mindMaps
-    .filter(mindMap => mindMap && typeof mindMap === 'object' && mindMap.id)
+    .filter(mindMap => mindMap && typeof mindMap === 'object' && 'id' in mindMap && mindMap.id)
     .map(mindMap => {
       try {
         return sanitizeMindMap(mindMap);
