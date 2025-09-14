@@ -67,7 +67,7 @@ const Header: React.FC = () => {
   const zoomPercentage = Math.round(canvasState.zoom * 100);
 
   return (
-    <header className="bg-white border-b border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between">
+    <header className="bg-white/90 backdrop-blur-sm border-b border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between rounded-xl shadow-md mx-2 mt-2">
       {/* Left Section */}
       <div className="flex items-center space-x-2 sm:space-x-4">
         <button

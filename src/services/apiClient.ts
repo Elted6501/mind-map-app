@@ -61,10 +61,8 @@ class ApiClient {
         // Handle 401 Unauthorized errors (token expired/invalid)
         if (response.status === 401) {
           SecureTokenManager.clearToken();
-          // Redirect to login page or trigger auth state update
-          if (typeof window !== 'undefined') {
-            window.location.href = '/';
-          }
+          // Only redirect if user is already authenticated (not during login)
+          // For login form errors, do NOT redirect or refresh
         }
         
         const errorText = await response.text();
@@ -82,7 +80,16 @@ class ApiClient {
       const data = await response.json();
       return data;
     } catch (error) {
-      console.error('API request failed:', error);
+      // Suppress console error for expected login failures (Invalid credentials)
+      if (
+        typeof error === 'object' && error !== null &&
+        'message' in error &&
+        (error as Error).message === 'Invalid credentials'
+      ) {
+        // Do not log to console
+      } else {
+        console.error('API request failed:', error);
+      }
       throw error;
     }
   }

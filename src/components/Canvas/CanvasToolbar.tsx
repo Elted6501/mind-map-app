@@ -44,13 +44,9 @@ const CanvasToolbar: React.FC = () => {
 
   return (
     <div className="absolute 
-      /* Mobile: Right side vertical toolbar */
       top-2 right-2 flex flex-col gap-1 p-1
-      /* Tablet and up: Top center horizontal toolbar */
       sm:top-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:flex-row sm:gap-2 sm:p-2 sm:right-auto
-      /* Common styles */
-      bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 z-10 
-      /* Mobile max height with scroll, Desktop max width with scroll */
+      bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-200 z-10 
       max-h-[50vh] overflow-y-auto sm:max-h-none sm:overflow-y-visible sm:max-w-[90vw] sm:overflow-x-auto">
       
       {/* Add Node */}

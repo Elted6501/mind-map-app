@@ -22,8 +22,9 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onSwitchToRegister }) => {
     try {
       await login(email, password);
     } catch (err) {
-      // Error is handled by the auth context
-      console.error('Login failed:', err);
+      // Error is handled by the auth context, prevent page reload
+      // Do not throw or propagate error, just show error message
+      // No action needed here
     }
   };
 

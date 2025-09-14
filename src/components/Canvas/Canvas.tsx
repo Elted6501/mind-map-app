@@ -407,8 +407,10 @@ const Canvas: React.FC = () => {
       <div className="w-full h-full bg-gray-50 flex items-center justify-center">
         <div className="text-center text-gray-500">
           <div className="text-6xl mb-4">🧠</div>
-          <h2 className="text-xl font-semibold mb-2">No Mind Mapping App Loaded</h2>
-          <p className="text-gray-400">Create or load a mind mapping app to get started</p>
+          <div className="bg-white rounded-xl shadow-md p-6 text-center max-w-md mx-auto">
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">No Mind Mapping App Loaded</h2>
+            <p className="text-gray-600 mb-2">Create or load a mind mapping app to get started</p>
+          </div>
         </div>
       </div>
     );
@@ -417,7 +419,7 @@ const Canvas: React.FC = () => {
   return (
     <div 
       ref={canvasRef}
-      className={`w-full h-full bg-gray-50 relative overflow-hidden ${
+      className={`w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100 relative overflow-hidden ${
         dragState.isDragging && dragState.dragType === 'canvas' 
           ? 'cursor-grabbing' 
           : dragState.isDragging && dragState.dragType === 'node'

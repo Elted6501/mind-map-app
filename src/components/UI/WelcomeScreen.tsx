@@ -44,7 +44,7 @@ const WelcomeScreen: React.FC = () => {
   const recentMindMaps = Array.isArray(mindMaps) ? mindMaps.slice(-3).reverse() : [];
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6">
+  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6 overflow-y-auto">
       <div className="max-w-6xl w-full">
         {/* Header Section */}
         <div className="text-center mb-6 sm:mb-8 md:mb-12">

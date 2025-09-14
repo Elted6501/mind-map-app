@@ -5,7 +5,7 @@ const Sidebar: React.FC = () => {
   const { currentMindMap } = useMindMapStore();
 
   return (
-    <div className="h-full bg-gray-50 border-r border-gray-200 p-4">
+    <div className="h-full bg-white/90 backdrop-blur-sm border-r border-gray-200 p-4 rounded-xl shadow-md">
       <div className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">Mind Map</h2>
         <p className="text-sm text-gray-600">{currentMindMap?.title || 'Untitled'}</p>

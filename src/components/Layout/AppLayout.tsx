@@ -9,7 +9,7 @@ const AppLayout: React.FC = () => {
   const { sidebarOpen, propertyPanelOpen } = useMindMapStore();
 
   return (
-    <div className="flex h-screen relative">
+    <div className="flex h-screen relative bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 lg:hidden">
