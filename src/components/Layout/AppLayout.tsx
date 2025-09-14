@@ -9,10 +9,25 @@ const AppLayout: React.FC = () => {
   const { sidebarOpen, propertyPanelOpen } = useMindMapStore();
 
   return (
-    <div className="flex h-screen">
-      {/* Sidebar - responsive width */}
+    <div className="flex h-screen relative">
+      {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div className="w-80 lg:w-80 md:w-64 sm:w-56 sidebar-panel">
+        <div className="fixed inset-0 z-40 lg:hidden">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50"
+            onClick={() => useMindMapStore.getState().actions.toggleSidebar()}
+          />
+          {/* Sidebar */}
+          <div className="fixed inset-y-0 left-0 w-80 max-w-[80vw] bg-white z-50">
+            <Sidebar />
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sidebar */}
+      {sidebarOpen && (
+        <div className="hidden lg:block w-80 xl:w-80 lg:w-64">
           <Sidebar />
         </div>
       )}
@@ -28,9 +43,24 @@ const AppLayout: React.FC = () => {
         </div>
       </div>
 
-      {/* Property Panel - responsive width */}
+      {/* Mobile Property Panel Overlay */}
       {propertyPanelOpen && (
-        <div className="w-80 lg:w-80 md:w-64 sm:w-56 property-panel">
+        <div className="fixed inset-0 z-40 lg:hidden">
+          {/* Backdrop */}
+          <div 
+            className="fixed inset-0 bg-black bg-opacity-50"
+            onClick={() => useMindMapStore.getState().actions.togglePropertyPanel()}
+          />
+          {/* Property Panel */}
+          <div className="fixed inset-y-0 right-0 w-80 max-w-[80vw] bg-white z-50">
+            <PropertyPanel />
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Property Panel */}
+      {propertyPanelOpen && (
+        <div className="hidden lg:block w-80 xl:w-80 lg:w-64">
           <PropertyPanel />
         </div>
       )}

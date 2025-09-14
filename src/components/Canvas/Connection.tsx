@@ -6,6 +6,7 @@ interface ConnectionProps {
   fromNode: Node;
   toNode: Node;
   isSelected?: boolean;
+  isDragging?: boolean;
   zoom: number;
 }
 
@@ -14,6 +15,7 @@ const Connection: React.FC<ConnectionProps> = ({
   fromNode, 
   toNode, 
   isSelected = false,
+  isDragging = false,
   zoom 
 }) => {
   // Calculate connection points
@@ -100,7 +102,7 @@ const Connection: React.FC<ConnectionProps> = ({
         fill="none"
         markerEnd={`url(#${markerId})`}
         className={`
-          transition-all duration-200 cursor-pointer
+          ${isDragging ? '' : 'transition-all duration-200'} cursor-pointer
           ${isSelected ? 'stroke-blue-500' : ''}
         `}
         style={{
@@ -127,4 +129,29 @@ const Connection: React.FC<ConnectionProps> = ({
   );
 };
 
-export default Connection;
+// Custom comparison function for React.memo
+const areEqual = (prevProps: ConnectionProps, nextProps: ConnectionProps) => {
+  // Compare connection ID
+  if (prevProps.connection.id !== nextProps.connection.id) return false;
+  
+  // Compare node positions (most important for drag operations)
+  if (prevProps.fromNode.x !== nextProps.fromNode.x || 
+      prevProps.fromNode.y !== nextProps.fromNode.y ||
+      prevProps.toNode.x !== nextProps.toNode.x || 
+      prevProps.toNode.y !== nextProps.toNode.y) {
+    return false;
+  }
+  
+  // Compare other props
+  if (prevProps.isSelected !== nextProps.isSelected || 
+      prevProps.isDragging !== nextProps.isDragging ||
+      prevProps.zoom !== nextProps.zoom) {
+    return false;
+  }
+  
+  return true;
+};
+
+Connection.displayName = 'Connection';
+
+export default React.memo(Connection, areEqual);

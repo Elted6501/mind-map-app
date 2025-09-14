@@ -67,19 +67,19 @@ const Header: React.FC = () => {
   const zoomPercentage = Math.round(canvasState.zoom * 100);
 
   return (
-    <header className="bg-white border-b border-gray-200 px-4 py-2 flex items-center justify-between">
+    <header className="bg-white border-b border-gray-200 px-2 sm:px-4 py-2 flex items-center justify-between">
       {/* Left Section */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-4">
         <button
           onClick={handleBackToWelcome}
-          className="flex items-center space-x-2 px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+          className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
           title="Back to Welcome"
         >
           <ArrowLeft className="w-4 h-4" />
-          <span>Back</span>
+          <span className="hidden sm:inline">Back</span>
         </button>
 
-        <div className="h-6 w-px bg-gray-300" />
+        <div className="h-6 w-px bg-gray-300 hidden sm:block" />
 
         <button
           onClick={handleToggleSidebar}
@@ -93,15 +93,15 @@ const Header: React.FC = () => {
           <Menu className="w-4 h-4" />
         </button>
 
-        <div className="h-6 w-px bg-gray-300" />
+        <div className="h-6 w-px bg-gray-300 hidden sm:block" />
 
-        <h1 className="text-lg font-semibold text-gray-900">
+        <h1 className="text-sm sm:text-lg font-semibold text-gray-900 truncate max-w-[120px] sm:max-w-none">
           {currentMindMap?.title || 'Mind Map'}
         </h1>
       </div>
 
-      {/* Center Section - Tools */}
-      <div className="flex items-center space-x-2">
+      {/* Center Section - Tools (Hidden on mobile, shown on larger screens) */}
+      <div className="hidden lg:flex items-center space-x-2">
         <button
           onClick={handleSave}
           className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
@@ -161,8 +161,23 @@ const Header: React.FC = () => {
         </button>
       </div>
 
+      {/* Mobile Center Section - Essential tools only */}
+      <div className="flex lg:hidden items-center space-x-1">
+        <button
+          onClick={handleSave}
+          className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+          title="Save"
+        >
+          <Save className="w-4 h-4" />
+        </button>
+
+        <span className="text-xs text-gray-600 min-w-[50px] text-center">
+          {zoomPercentage}%
+        </span>
+      </div>
+
       {/* Right Section */}
-      <div className="flex items-center space-x-4">
+      <div className="flex items-center space-x-2 sm:space-x-4">
         <button
           onClick={handleTogglePropertyPanel}
           className={`p-2 rounded-md transition-colors ${
@@ -175,11 +190,11 @@ const Header: React.FC = () => {
           <Plus className="w-4 h-4" />
         </button>
 
-        <div className="h-6 w-px bg-gray-300" />
+        <div className="h-6 w-px bg-gray-300 hidden sm:block" />
 
-        <div className="flex items-center space-x-2">
+        <div className="hidden sm:flex items-center space-x-2">
           <User className="w-4 h-4 text-gray-600" />
-          <span className="text-sm text-gray-600">{user?.name}</span>
+          <span className="text-sm text-gray-600 max-w-[100px] truncate">{user?.name}</span>
         </div>
 
         <button

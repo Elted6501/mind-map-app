@@ -1,22 +1,15 @@
 import React from 'react';
 import { useMindMapStore } from '../../store/mindMapStore';
-import { NodeType } from '../../types';
 
 const CanvasToolbar: React.FC = () => {
   const { canvasState, currentMindMap, selectedNodes, actions } = useMindMapStore();
 
-  const handleCreateNode = (nodeType: NodeType = NodeType.BRANCH) => {
+  const handleCreateNode = () => {
     // Create node at center of visible canvas
     const centerX = (-canvasState.panX + window.innerWidth / 2) / canvasState.zoom;
     const centerY = (-canvasState.panY + window.innerHeight / 2) / canvasState.zoom;
     
-    const newNode = actions.createNode(null, { x: centerX, y: centerY }, 'New Node');
-    
-    // Optionally update node type after creation if different from default
-    if (nodeType !== NodeType.BRANCH && newNode) {
-      // This would need to be implemented in the store
-      console.log(`Node type ${nodeType} requested but not yet implemented`);
-    }
+    actions.createNode(null, { x: centerX, y: centerY }, 'New Node');
   };
 
   const handleZoomToFit = () => {
@@ -50,60 +43,44 @@ const CanvasToolbar: React.FC = () => {
   };
 
   return (
-    <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 flex items-center gap-2 p-2 z-10">
+    <div className="absolute 
+      /* Mobile: Right side vertical toolbar */
+      top-2 right-2 flex flex-col gap-1 p-1
+      /* Tablet and up: Top center horizontal toolbar */
+      sm:top-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:flex-row sm:gap-2 sm:p-2 sm:right-auto
+      /* Common styles */
+      bg-white/90 backdrop-blur-sm rounded-lg shadow-lg border border-gray-200 z-10 
+      /* Mobile max height with scroll, Desktop max width with scroll */
+      max-h-[50vh] overflow-y-auto sm:max-h-none sm:overflow-y-visible sm:max-w-[90vw] sm:overflow-x-auto">
+      
       {/* Add Node */}
       <button
-        onClick={() => handleCreateNode()}
-        className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors touch-target"
+        onClick={handleCreateNode}
+        className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors touch-target whitespace-nowrap min-w-[2.5rem] sm:min-w-auto"
         title="Add Node (Double-click canvas)"
       >
         <span>➕</span>
-        <span className="hidden sm:inline">Add Node</span>
+        <span className="hidden md:inline">Add Node</span>
       </button>
 
-      {/* Node Type Selector */}
-      <div className="hidden md:flex items-center gap-1">
-        <button
-          onClick={() => handleCreateNode(NodeType.NOTE)}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target"
-          title="Add Note"
-        >
-          📝
-        </button>
-        <button
-          onClick={() => handleCreateNode(NodeType.TASK)}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target"
-          title="Add Task"
-        >
-          ✅
-        </button>
-        <button
-          onClick={() => handleCreateNode(NodeType.LINK)}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target"
-          title="Add Link"
-        >
-          🔗
-        </button>
-      </div>
-
-      {/* Divider */}
-      <div className="w-px h-6 bg-gray-300"></div>
+      {/* Divider - Horizontal on mobile, Vertical on desktop */}
+      <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6"></div>
 
       {/* Zoom Controls */}
-      <div className="flex items-center gap-1">
+      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-1">
         <button
           onClick={actions.zoomOut}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target"
+          className="p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center"
           title="Zoom Out"
         >
           🔍-
         </button>
-        <span className="text-sm text-gray-600 min-w-[50px] text-center">
+        <span className="text-xs sm:text-sm text-gray-600 min-w-[40px] sm:min-w-[50px] text-center py-1">
           {Math.round(canvasState.zoom * 100)}%
         </span>
         <button
           onClick={actions.zoomIn}
-          className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target"
+          className="p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center"
           title="Zoom In"
         >
           🔍+
@@ -113,29 +90,20 @@ const CanvasToolbar: React.FC = () => {
       {/* Fit to Screen */}
       <button
         onClick={handleZoomToFit}
-        className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target"
+        className="hidden sm:block p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target"
         title="Fit to Screen"
       >
         📐
       </button>
 
-      {/* Reset Zoom */}
-      <button
-        onClick={actions.resetZoom}
-        className="p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target"
-        title="Reset Zoom (100%)"
-      >
-        🎯
-      </button>
-
-      {/* Divider */}
-      <div className="w-px h-6 bg-gray-300"></div>
+      {/* Divider - Horizontal on mobile, Vertical on desktop */}
+      <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6"></div>
 
       {/* Delete Selected */}
       {selectedNodes.length > 0 && (
         <button
           onClick={() => actions.deleteNode(selectedNodes)}
-          className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors touch-target"
+          className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center"
           title={`Delete ${selectedNodes.length} selected node(s)`}
         >
           🗑️
@@ -145,11 +113,11 @@ const CanvasToolbar: React.FC = () => {
       {/* Save */}
       <button
         onClick={actions.saveMindMap}
-        className="flex items-center gap-2 px-3 py-2 text-sm bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors touch-target"
+        className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors touch-target whitespace-nowrap min-w-[2.5rem] sm:min-w-auto"
         title="Save Mind Map"
       >
         <span>💾</span>
-        <span className="hidden sm:inline">Save</span>
+        <span className="hidden md:inline">Save</span>
       </button>
     </div>
   );

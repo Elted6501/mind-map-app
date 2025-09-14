@@ -7,6 +7,7 @@ interface NodeProps {
   isSelected: boolean;
   isEditing: boolean;
   zoom: number;
+  isDragging?: boolean;
   onStartConnection?: (nodeId: string) => void;
   onNodeMouseDown?: (e: React.MouseEvent, nodeId: string) => void;
 }
@@ -16,6 +17,7 @@ const Node: React.FC<NodeProps> = ({
   isSelected, 
   isEditing, 
   zoom,
+  isDragging = false,
   onStartConnection,
   onNodeMouseDown
 }) => {
@@ -81,8 +83,8 @@ const Node: React.FC<NodeProps> = ({
   return (
     <div
       className={`
-        absolute cursor-pointer select-none transition-all duration-200 
-        group
+        absolute cursor-pointer select-none group
+        ${isDragging ? '' : 'transition-all duration-200'}
         ${isSelected ? 'ring-2 ring-blue-400 ring-offset-1' : ''}
         ${isHovered ? 'shadow-lg transform scale-105' : 'shadow-md'}
         ${getShapeClass()}
@@ -191,4 +193,4 @@ const Node: React.FC<NodeProps> = ({
   );
 };
 
-export default Node;
+export default React.memo(Node);

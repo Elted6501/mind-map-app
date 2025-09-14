@@ -13,7 +13,8 @@ interface DragState {
   currentPos: Point;
   draggedNodeId?: string;
   connectionStart?: string;
-  originalNodePos?: Point;
+  initialNodePos?: Point;  // Node's initial position when drag started
+  currentNodePos?: Point;  // Current position during drag (for live preview)
 }
 
 const Canvas: React.FC = () => {
@@ -62,7 +63,7 @@ const Canvas: React.FC = () => {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return;
 
-    // Use raw screen coordinates for dragging - will convert to world coordinates in move handler
+    // Simple canvas coordinates
     const point = {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
@@ -81,15 +82,18 @@ const Canvas: React.FC = () => {
       actions.selectNodes([nodeId]);
     }
     
-    setDragState({
-      isDragging: true,
-      dragType: 'node',
-      startPos: point,
-      currentPos: point,
-      draggedNodeId: nodeId,
-      originalNodePos: undefined // Will be set on first move
-    });
-  }, [canvasState, connectionMode, selectedNodes, actions, handleFinishConnection]);
+    const currentNode = currentMindMap?.nodes.find(n => n.id === nodeId);
+    if (currentNode) {
+      setDragState({
+        isDragging: true,
+        dragType: 'node',
+        startPos: point,
+        currentPos: point,
+        draggedNodeId: nodeId,
+        initialNodePos: { x: currentNode.x, y: currentNode.y }
+      });
+    }
+  }, [connectionMode, selectedNodes, actions, handleFinishConnection, currentMindMap]);
 
   // Handle mouse events
   const handleMouseDown = useCallback((e: React.MouseEvent) => {
@@ -129,18 +133,8 @@ const Canvas: React.FC = () => {
         return;
       }
 
-      // Handle node selection and dragging
-      if (!selectedNodes.includes(clickedNode.id)) {
-        actions.selectNodes([clickedNode.id]);
-      }
-      
-      setDragState({
-        isDragging: true,
-        dragType: 'node',
-        startPos: screenPoint,
-        currentPos: screenPoint,
-        draggedNodeId: clickedNode.id
-      });
+      // Node dragging is handled by handleNodeMouseDown, so just return here
+      return;
     } else {
       // Cancel connection mode
       if (connectionMode.active) {
@@ -198,32 +192,30 @@ const Canvas: React.FC = () => {
       setDragState(prev => ({ ...prev, currentPos: screenPoint }));
     }
 
-    if (dragState.dragType === 'node' && dragState.draggedNodeId) {
-      // Calculate delta in screen space, then convert to world space
-      const deltaScreenX = screenPoint.x - dragState.startPos.x;
-      const deltaScreenY = screenPoint.y - dragState.startPos.y;
+    if (dragState.dragType === 'node' && dragState.draggedNodeId && dragState.initialNodePos) {
+      // Convert current mouse position to world coordinates
+      const currentWorldX = (screenPoint.x - canvasState.panX) / canvasState.zoom;
+      const currentWorldY = (screenPoint.y - canvasState.panY) / canvasState.zoom;
       
-      // Convert screen delta to world delta
-      const deltaWorldX = deltaScreenX / canvasState.zoom;
-      const deltaWorldY = deltaScreenY / canvasState.zoom;
+      // Convert start mouse position to world coordinates
+      const startWorldX = (dragState.startPos.x - canvasState.panX) / canvasState.zoom;
+      const startWorldY = (dragState.startPos.y - canvasState.panY) / canvasState.zoom;
       
-      const currentNode = currentMindMap?.nodes.find(n => n.id === dragState.draggedNodeId);
-      if (currentNode) {
-        // Store the original position when dragging starts
-        if (!dragState.originalNodePos) {
-          setDragState(prev => ({
-            ...prev,
-            originalNodePos: { x: currentNode.x, y: currentNode.y }
-          }));
-        }
-        
-        const originalPos = dragState.originalNodePos || { x: currentNode.x, y: currentNode.y };
-        
-        actions.updateNode(dragState.draggedNodeId, {
-          x: originalPos.x + deltaWorldX,
-          y: originalPos.y + deltaWorldY
-        });
-      }
+      // Calculate world delta
+      const worldDeltaX = currentWorldX - startWorldX;
+      const worldDeltaY = currentWorldY - startWorldY;
+      
+      // Calculate new position for live preview
+      const newPosition = {
+        x: dragState.initialNodePos.x + worldDeltaX,
+        y: dragState.initialNodePos.y + worldDeltaY
+      };
+      
+      // Store current position in drag state for live preview (don't update store yet)
+      setDragState(prev => ({
+        ...prev,
+        currentNodePos: newPosition
+      }));
     } else if (dragState.dragType === 'canvas') {
       // Pan the canvas with boundary constraints using screen coordinates
       const deltaX = dragState.currentPos.x - dragState.startPos.x;
@@ -262,14 +254,22 @@ const Canvas: React.FC = () => {
   }, [dragState, canvasState, connectionMode, actions, currentMindMap]);
 
   const handleMouseUp = useCallback(() => {
+    // If we were dragging a node, commit the final position to the store
+    if (dragState.dragType === 'node' && dragState.draggedNodeId && dragState.currentNodePos) {
+      actions.updateNode(dragState.draggedNodeId, {
+        x: dragState.currentNodePos.x,
+        y: dragState.currentNodePos.y
+      });
+    }
+    
+    // Reset drag state
     setDragState({
       isDragging: false,
       dragType: null,
       startPos: { x: 0, y: 0 },
-      currentPos: { x: 0, y: 0 },
-      originalNodePos: undefined
+      currentPos: { x: 0, y: 0 }
     });
-  }, []);
+  }, [dragState, actions]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -349,19 +349,26 @@ const Canvas: React.FC = () => {
   const renderNode = useCallback((node: Node) => {
     const isSelected = selectedNodes.includes(node.id);
     const isEditing = editingNode === node.id;
+    const isNodeBeingDragged = dragState.dragType === 'node' && dragState.draggedNodeId === node.id;
+    
+    // Use current drag position if this node is being dragged
+    const nodeToRender = (isNodeBeingDragged && dragState.currentNodePos) 
+      ? { ...node, x: dragState.currentNodePos.x, y: dragState.currentNodePos.y }
+      : node;
 
     return (
       <NodeComponent
         key={node.id}
-        node={node}
+        node={nodeToRender}
         isSelected={isSelected}
         isEditing={isEditing}
+        isDragging={isNodeBeingDragged}
         zoom={1} // Always 1 since scaling is handled by parent container
         onStartConnection={handleStartConnection}
         onNodeMouseDown={handleNodeMouseDown}
       />
     );
-  }, [selectedNodes, editingNode, handleStartConnection, handleNodeMouseDown]);
+  }, [selectedNodes, editingNode, handleStartConnection, handleNodeMouseDown, dragState]);
 
   // Render a connection
   const renderConnection = useCallback((connection: Connection) => {
@@ -370,16 +377,30 @@ const Canvas: React.FC = () => {
     
     if (!fromNode || !toNode) return null;
 
+    // Check if either node is being dragged and use live position if so
+    const isFromNodeBeingDragged = dragState.dragType === 'node' && dragState.draggedNodeId === connection.fromNodeId;
+    const isToNodeBeingDragged = dragState.dragType === 'node' && dragState.draggedNodeId === connection.toNodeId;
+    const isConnectionBeingDragged = isFromNodeBeingDragged || isToNodeBeingDragged;
+    
+    const fromNodeToRender = (isFromNodeBeingDragged && dragState.currentNodePos) 
+      ? { ...fromNode, x: dragState.currentNodePos.x, y: dragState.currentNodePos.y }
+      : fromNode;
+      
+    const toNodeToRender = (isToNodeBeingDragged && dragState.currentNodePos) 
+      ? { ...toNode, x: dragState.currentNodePos.x, y: dragState.currentNodePos.y }
+      : toNode;
+
     return (
       <ConnectionComponent
         key={connection.id}
         connection={connection}
-        fromNode={fromNode}
-        toNode={toNode}
+        fromNode={fromNodeToRender}
+        toNode={toNodeToRender}
+        isDragging={isConnectionBeingDragged}
         zoom={1} // Always 1 since scaling is handled by parent container
       />
     );
-  }, [currentMindMap]);
+  }, [currentMindMap, dragState]);
 
   if (!currentMindMap) {
     return (
@@ -408,7 +429,53 @@ const Canvas: React.FC = () => {
       onMouseUp={handleMouseUp}
       onDoubleClick={handleDoubleClick}
       onWheel={handleWheel}
+      style={{ touchAction: 'none' }} // Prevent default touch behaviors for better control
     >
+      {/* Connections layer - positioned over entire viewport but behind nodes */}
+      <svg 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          width: '100%',
+          height: '100%',
+          overflow: 'visible'
+        }}
+      >
+        {/* Transform group for connections to match canvas transform */}
+        <g transform={`translate(${canvasState.panX}, ${canvasState.panY}) scale(${canvasState.zoom})`}>
+          {currentMindMap.connections.map(renderConnection)}
+          
+          {/* Connection preview line */}
+          {connectionMode.active && connectionMode.startNodeId && connectionMode.currentPos && (
+            (() => {
+              const startNode = currentMindMap.nodes.find(n => n.id === connectionMode.startNodeId);
+              if (!startNode) return null;
+              
+              // Use live drag position if start node is being dragged
+              const isStartNodeBeingDragged = dragState.dragType === 'node' && dragState.draggedNodeId === connectionMode.startNodeId;
+              const startNodeToRender = (isStartNodeBeingDragged && dragState.currentNodePos) 
+                ? { ...startNode, x: dragState.currentNodePos.x, y: dragState.currentNodePos.y }
+                : startNode;
+              
+              const startX = startNodeToRender.x + startNodeToRender.width / 2;
+              const startY = startNodeToRender.y + startNodeToRender.height / 2;
+              
+              return (
+                <line
+                  x1={startX}
+                  y1={startY}
+                  x2={connectionMode.currentPos.x}
+                  y2={connectionMode.currentPos.y}
+                  stroke="#3b82f6"
+                  strokeWidth={2}
+                  strokeDasharray="4,4"
+                  opacity={0.7}
+                />
+              );
+            })()
+          )}
+        </g>
+      </svg>
+
       {/* Canvas content layer - this gets transformed */}
       <div
         className="absolute inset-0"
@@ -431,41 +498,6 @@ const Canvas: React.FC = () => {
           />
         )}
 
-        {/* Connections */}
-        <svg 
-          className="absolute inset-0 pointer-events-none"
-          style={{
-            width: '100%',
-            height: '100%'
-          }}
-        >
-          {currentMindMap.connections.map(renderConnection)}
-          
-          {/* Connection preview line */}
-          {connectionMode.active && connectionMode.startNodeId && connectionMode.currentPos && (
-            (() => {
-              const startNode = currentMindMap.nodes.find(n => n.id === connectionMode.startNodeId);
-              if (!startNode) return null;
-              
-              const startX = startNode.x + startNode.width / 2;
-              const startY = startNode.y + startNode.height / 2;
-              
-              return (
-                <line
-                  x1={startX}
-                  y1={startY}
-                  x2={connectionMode.currentPos.x}
-                  y2={connectionMode.currentPos.y}
-                  stroke="#3b82f6"
-                  strokeWidth={2}
-                  strokeDasharray="4,4"
-                  opacity={0.7}
-                />
-              );
-            })()
-          )}
-        </svg>
-
         {/* Nodes */}
         <div className="relative">
           {currentMindMap.nodes.map(renderNode)}
@@ -477,14 +509,14 @@ const Canvas: React.FC = () => {
       <CanvasToolbar />
 
       {/* Canvas info overlay */}
-      <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-sm text-gray-600 shadow-lg">
+      <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/90 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-gray-600 shadow-lg">
         <div>Zoom: {Math.round(canvasState.zoom * 100)}%</div>
-        <div>Nodes: {currentMindMap.nodes.length}</div>
-        <div>Connections: {currentMindMap.connections.length}</div>
+        <div className="hidden sm:block">Nodes: {currentMindMap.nodes.length}</div>
+        <div className="hidden sm:block">Connections: {currentMindMap.connections.length}</div>
       </div>
 
-      {/* Help text */}
-      <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-500 shadow-lg max-w-64">
+      {/* Help text - Hidden on mobile, shown on larger screens */}
+      <div className="hidden lg:block absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-500 shadow-lg max-w-64">
         <div>• Double-click: Create/Edit node</div>
         <div>• Drag nodes: Move nodes</div>
         <div>• Drag canvas: Navigate canvas</div>
@@ -499,6 +531,15 @@ const Canvas: React.FC = () => {
           <div className="mt-2 text-blue-600 font-medium">
             🔗 Click a node to connect
           </div>
+        )}
+      </div>
+
+      {/* Mobile help indicator */}
+      <div className="lg:hidden absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 text-xs text-gray-500 shadow-lg">
+        {connectionMode.active ? (
+          <div className="text-blue-600 font-medium">🔗 Tap node to connect</div>
+        ) : (
+          <div>Double-tap to create node</div>
         )}
       </div>
 
