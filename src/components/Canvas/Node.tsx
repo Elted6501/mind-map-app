@@ -8,6 +8,7 @@ interface NodeProps {
   isEditing: boolean;
   zoom: number;
   onStartConnection?: (nodeId: string) => void;
+  onNodeMouseDown?: (e: React.MouseEvent, nodeId: string) => void;
 }
 
 const Node: React.FC<NodeProps> = ({ 
@@ -15,7 +16,8 @@ const Node: React.FC<NodeProps> = ({
   isSelected, 
   isEditing, 
   zoom,
-  onStartConnection 
+  onStartConnection,
+  onNodeMouseDown
 }) => {
   const { actions } = useMindMapStore();
   const [isHovered, setIsHovered] = useState(false);
@@ -36,6 +38,13 @@ const Node: React.FC<NodeProps> = ({
       onStartConnection(node.id);
     }
   }, [node.id, onStartConnection]);
+
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onNodeMouseDown) {
+      onNodeMouseDown(e, node.id);
+    }
+  }, [node.id, onNodeMouseDown]);
 
   const getNodeTypeIcon = () => {
     switch (node.type) {
@@ -95,6 +104,7 @@ const Node: React.FC<NodeProps> = ({
       }}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      onMouseDown={handleMouseDown}
     >
       {/* Node content */}
       <div className="flex items-center justify-center h-full px-2 relative">

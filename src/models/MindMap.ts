@@ -51,6 +51,12 @@ export interface ICanvasState {
   snapToGrid: boolean;
   selectedNodes: string[];
   editingNode: string | null;
+  bounds: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  };
 }
 
 export interface IMindMap extends Document {
@@ -135,6 +141,12 @@ const CanvasStateSchema = new Schema<ICanvasState>({
   snapToGrid: { type: Boolean, default: false },
   selectedNodes: [{ type: String }],
   editingNode: { type: String, default: null },
+  bounds: {
+    minX: { type: Number, default: -5000 },
+    maxX: { type: Number, default: 5000 },
+    minY: { type: Number, default: -5000 },
+    maxY: { type: Number, default: 5000 },
+  },
 });
 
 const MindMapSchema = new Schema<IMindMap>({

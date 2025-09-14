@@ -112,6 +112,13 @@ export interface CanvasState {
   snapToGrid: boolean;
   selectedNodes: string[];
   editingNode: string | null;
+  // Virtual canvas bounds for navigation
+  bounds: {
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  };
 }
 
 export interface MindMap {
@@ -283,6 +290,12 @@ export const DEFAULT_CANVAS_STATE: CanvasState = {
   snapToGrid: false,
   selectedNodes: [],
   editingNode: null,
+  bounds: {
+    minX: -5000,
+    maxX: 5000,
+    minY: -5000,
+    maxY: 5000,
+  },
 };
 
 export const NODE_TYPE_CONFIGS: Record<NodeType, Partial<NodeStyle>> = {
