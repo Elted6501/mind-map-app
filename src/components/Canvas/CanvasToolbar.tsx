@@ -2,7 +2,7 @@ import React from 'react';
 import { Undo, Redo, RotateCcw, Trash2, Grid3X3, Magnet } from 'lucide-react';
 import { useMindMapStore } from '../../store/mindMapStore';
 const CanvasToolbar: React.FC = () => {
-  const { canvasState, currentMindMap, selectedNodes, actions } = useMindMapStore();
+  const { canvasState, selectedNodes, actions } = useMindMapStore();
 
   const handleDeleteNodes = () => {
     // Use the exact same logic as keyboard delete in Canvas.tsx

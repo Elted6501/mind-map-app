@@ -203,9 +203,9 @@ function handleSVGExport(mindMap: IMindMap) {
   });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function handlePNGExport(_mindMap: IMindMap) {
-  // For PNG export, we'll return a message that it requires client-side processing
-  // since server-side canvas rendering requires additional dependencies
+  // PNG export requires client-side processing
   return NextResponse.json({
     success: false,
     error: 'PNG export requires client-side processing. Use the browser export instead.',
@@ -213,8 +213,9 @@ function handlePNGExport(_mindMap: IMindMap) {
   }, { status: 501 });
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function handlePDFExport(_mindMap: IMindMap) {
-  // For PDF export, we'll return a message that it requires additional setup
+  // PDF export requires additional setup
   return NextResponse.json({
     success: false,
     error: 'PDF export requires additional setup with libraries like puppeteer or jsPDF.',

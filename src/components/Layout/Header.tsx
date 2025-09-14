@@ -22,19 +22,14 @@ const Header: React.FC = () => {
   } = useMindMapStore();
 
   const { user, logout } = useAuth();
-  const [exportDropdownOpen, setExportDropdownOpen] = useState(false);
   const [mainDropdownOpen, setMainDropdownOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
-  const exportDropdownRef = useRef<HTMLDivElement>(null);
   const mainDropdownRef = useRef<HTMLDivElement>(null);
   const mainButtonRef = useRef<HTMLButtonElement>(null);
 
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (exportDropdownRef.current && !exportDropdownRef.current.contains(event.target as Node)) {
-        setExportDropdownOpen(false);
-      }
       if (mainDropdownRef.current && !mainDropdownRef.current.contains(event.target as Node)) {
         setMainDropdownOpen(false);
       }
@@ -60,8 +55,6 @@ const Header: React.FC = () => {
     if (!currentMindMap) return;
     
     try {
-      setExportDropdownOpen(false);
-      
       if (format === 'json') {
         // Export as JSON file (client-side)
         const dataStr = JSON.stringify(currentMindMap, null, 2);
@@ -108,8 +101,8 @@ const Header: React.FC = () => {
   };
 
   const handlePNGExport = async () => {
-    let hiddenElements: HTMLElement[] = [];
-    let originalCanvasState: any = null;
+    const hiddenElements: HTMLElement[] = [];
+    let originalCanvasState: { panX: number; panY: number; zoom: number } | null = null;
     
     try {
       // Dynamic import to avoid SSR issues
@@ -224,8 +217,8 @@ const Header: React.FC = () => {
   };
 
   const handlePDFExport = async () => {
-    let hiddenElements: HTMLElement[] = [];
-    let originalCanvasState: any = null;
+    const hiddenElements: HTMLElement[] = [];
+    let originalCanvasState: { panX: number; panY: number; zoom: number } | null = null;
     
     try {
       // Dynamic imports to avoid SSR issues
