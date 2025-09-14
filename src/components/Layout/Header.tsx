@@ -96,7 +96,7 @@ const Header: React.FC = () => {
         <div className="h-6 w-px bg-gray-300 hidden sm:block" />
 
         <h1 className="text-sm sm:text-lg font-semibold text-gray-900 truncate max-w-[120px] sm:max-w-none">
-          {currentMindMap?.title || 'Mind Map'}
+          {currentMindMap?.title || 'Mind Mapping App'}
         </h1>
       </div>
 

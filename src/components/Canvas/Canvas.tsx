@@ -407,8 +407,8 @@ const Canvas: React.FC = () => {
       <div className="w-full h-full bg-gray-50 flex items-center justify-center">
         <div className="text-center text-gray-500">
           <div className="text-6xl mb-4">🧠</div>
-          <h2 className="text-xl font-semibold mb-2">No Mind Map Loaded</h2>
-          <p className="text-gray-400">Create or load a mind map to get started</p>
+          <h2 className="text-xl font-semibold mb-2">No Mind Mapping App Loaded</h2>
+          <p className="text-gray-400">Create or load a mind mapping app to get started</p>
         </div>
       </div>
     );

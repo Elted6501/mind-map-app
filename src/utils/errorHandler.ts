@@ -1,4 +1,4 @@
-// Error handling utilities for the mind map application
+// Error handling utilities for the Mind Mapping App
 
 export interface ErrorContext {
   context?: string;
@@ -37,6 +37,11 @@ export function reportError(error: Error, context?: ErrorContext): void {
   if (process.env.NODE_ENV === 'production') {
     // Example: sendToErrorTrackingService(errorReport);
   }
+}
+
+// App-level error message for Mind Mapping App
+export function getAppErrorMessage() {
+  return 'An error occurred in Mind Mapping App.';
 }
 
 // Handle API errors

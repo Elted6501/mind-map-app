@@ -114,7 +114,7 @@ const CanvasToolbar: React.FC = () => {
       <button
         onClick={actions.saveMindMap}
         className="flex items-center justify-center gap-1 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors touch-target whitespace-nowrap min-w-[2.5rem] sm:min-w-auto"
-        title="Save Mind Map"
+  title="Save Mind Mapping"
       >
         <span>💾</span>
         <span className="hidden md:inline">Save</span>

@@ -54,20 +54,20 @@ const WelcomeScreen: React.FC = () => {
             </div>
           </div>
           <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-gray-900 mb-2 sm:mb-3 md:mb-4 px-2 sm:px-4">
-            Welcome to Mind Maping
+            Welcome to Mind Mapping App
           </h1>
           <p className="text-sm sm:text-base md:text-lg lg:text-xl text-gray-600 max-w-3xl mx-auto px-3 sm:px-4 leading-relaxed">
-            Organize your thoughts, plan projects, and visualize ideas with our intuitive mind mapping tool.
+            Organize your thoughts, plan projects, and visualize ideas with our intuitive Mind Mapping App.
           </p>
         </div>
 
         {/* Main Action Cards */}
         <div className="grid gap-4 sm:gap-6 md:gap-8 lg:grid-cols-2 mb-6 sm:mb-8 md:mb-12 px-2 sm:px-0">
-          {/* Create New Mind Map Card */}
+          {/* Create New Mind Mapping Card */}
           <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center mb-3 sm:mb-4">
               <Plus className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-blue-600 mr-2 sm:mr-3" />
-              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">Create New Mind Map</h3>
+              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">Create New Mind Mapping</h3>
             </div>
             <p className="text-xs sm:text-sm md:text-base text-gray-600 mb-3 sm:mb-4 leading-relaxed">
               Start fresh with a blank canvas and bring your ideas to life.
@@ -79,7 +79,7 @@ const WelcomeScreen: React.FC = () => {
                   value={newMapTitle}
                   onChange={(e) => setNewMapTitle(e.target.value)}
                   onKeyDown={handleKeyPress}
-                  placeholder="Enter mind map title..."
+                  placeholder="Enter Mind Mapping title..."
                   className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-sm sm:text-base border border-gray-300 rounded-md sm:rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
                   autoFocus
                 />
@@ -107,16 +107,16 @@ const WelcomeScreen: React.FC = () => {
                 onClick={() => setIsCreating(true)}
                 className="w-full px-4 py-2.5 sm:py-3 md:py-3.5 text-sm sm:text-base bg-blue-600 text-white rounded-md sm:rounded-lg hover:bg-blue-700 active:bg-blue-800 transition-colors font-medium shadow-sm hover:shadow-md"
               >
-                Create New Mind Map
+                Create New Mind Mapping
               </button>
             )}
           </div>
 
-          {/* Recent Mind Maps Card */}
+          {/* Recent Mind Mapping Cards */}
           <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center mb-3 sm:mb-4">
               <FileText className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-green-600 mr-2 sm:mr-3" />
-              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">Recent Mind Maps</h3>
+              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">Recent Mind Mapping</h3>
             </div>
             <p className="text-xs sm:text-sm md:text-base text-gray-600 mb-3 sm:mb-4 leading-relaxed">
               Continue working on your recent projects.
@@ -139,8 +139,8 @@ const WelcomeScreen: React.FC = () => {
             ) : (
               <div className="text-center py-6 sm:py-8">
                 <FileText className="w-8 h-8 sm:w-10 sm:h-10 text-gray-300 mx-auto mb-2" />
-                <p className="text-gray-500 text-xs sm:text-sm">No recent mind maps</p>
-                <p className="text-gray-400 text-xs mt-1">Create your first mind map to get started</p>
+                <p className="text-gray-500 text-xs sm:text-sm">No recent Mind Mapping</p>
+                <p className="text-gray-400 text-xs mt-1">Create your first Mind Mapping to get started</p>
               </div>
             )}
           </div>
@@ -164,7 +164,7 @@ const WelcomeScreen: React.FC = () => {
             </div>
             <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Collaborate</h4>
             <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
-              Share and work together on mind maps in real-time
+              Share and work together on Mind Mapping in real-time
             </p>
           </div>
           
