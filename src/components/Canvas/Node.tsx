@@ -71,13 +71,27 @@ const Node: React.FC<NodeProps> = ({
     switch (node.style.shape) {
       case 'circle':
         return 'rounded-full';
-      case 'diamond':
-        return 'transform rotate-45';
-      case 'hexagon':
-        return 'clip-path-hexagon';
       default:
         return '';
     }
+  };
+
+  const getShapeStyle = () => {
+    return {
+      left: node.x,
+      top: node.y,
+      width: node.width,
+      height: node.height,
+      backgroundColor: node.style.backgroundColor,
+      color: node.style.textColor,
+      border: `${node.style.borderWidth}px solid ${node.style.borderColor}`,
+      borderRadius: node.style.shape === 'circle' ? '50%' : node.style.borderRadius,
+      fontSize: node.style.fontSize,
+      fontWeight: node.style.fontWeight,
+      transform: `scale(${zoom})`,
+      transformOrigin: 'top left',
+      zIndex: isSelected ? 10 : 1
+    };
   };
 
   return (
@@ -89,27 +103,25 @@ const Node: React.FC<NodeProps> = ({
         ${isHovered ? 'shadow-lg transform scale-105' : 'shadow-md'}
         ${getShapeClass()}
       `}
-      style={{
-        left: node.x,
-        top: node.y,
-        width: node.width,
-        height: node.height,
-        backgroundColor: node.style.backgroundColor,
-        color: node.style.textColor,
-        border: `${node.style.borderWidth}px solid ${node.style.borderColor}`,
-        borderRadius: node.style.shape !== 'circle' ? node.style.borderRadius : '50%',
-        fontSize: node.style.fontSize,
-        fontWeight: node.style.fontWeight,
-        transform: `scale(${zoom})`,
-        transformOrigin: 'top left',
-        zIndex: isSelected ? 10 : 1
-      }}
+      style={getShapeStyle()}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseDown={handleMouseDown}
     >
       {/* Node content */}
-      <div className="flex items-center justify-center h-full px-2 relative">
+      <div 
+        className="flex items-center justify-center h-full px-2 relative"
+        style={{
+          wordBreak: 'break-word',
+          overflowWrap: 'break-word',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '100%',
+          minHeight: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
         {/* Node type icon */}
         <span className="absolute top-1 left-1 text-xs opacity-70">
           {getNodeTypeIcon()}
@@ -128,8 +140,24 @@ const Node: React.FC<NodeProps> = ({
             style={{ fontSize: 'inherit', color: 'inherit' }}
           />
         ) : (
-          <div className="text-center break-words w-full overflow-hidden">
-            {node.text}
+          <div 
+            className="text-center break-words w-full px-1 py-1 flex items-center justify-center"
+            style={{
+              fontSize: 'inherit',
+              lineHeight: '1.2',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              hyphens: 'auto',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              maxHeight: '100%'
+            }}
+          >
+            <span style={{ textAlign: 'center', width: '100%' }}>
+              {node.text}
+            </span>
           </div>
         )}
       </div>

@@ -19,7 +19,7 @@ export interface INode {
     borderRadius: number;
     fontSize: number;
     fontWeight: string;
-    shape: 'rectangle' | 'circle' | 'diamond' | 'hexagon';
+    shape: 'rectangle' | 'circle';
   };
   collapsed: boolean;
   metadata?: Record<string, unknown>;
@@ -99,7 +99,7 @@ const NodeSchema = new Schema<INode>({
     fontWeight: { type: String, default: 'normal' },
     shape: {
       type: String,
-      enum: ['rectangle', 'circle', 'diamond', 'hexagon'],
+      enum: ['rectangle', 'circle'],
       default: 'rectangle',
     },
   },

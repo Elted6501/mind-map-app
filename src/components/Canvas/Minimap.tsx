@@ -58,7 +58,10 @@ export const Minimap = () => {
   })) || [];
 
   return (
-    <div className="fixed bottom-2 sm:bottom-4 right-2 sm:right-4 bg-white/90 backdrop-blur-sm border border-gray-300 rounded-lg p-1 sm:p-2 shadow-lg z-10 hidden md:block">
+    <div 
+      className="fixed bottom-2 sm:bottom-4 right-2 sm:right-4 bg-white/90 backdrop-blur-sm border border-gray-300 rounded-lg p-1 sm:p-2 shadow-lg z-10 hidden md:block"
+      data-minimap="true"
+    >
       <div className="flex items-center justify-between mb-1">
         <div className="text-xs text-gray-600">Canvas View</div>
         <button 

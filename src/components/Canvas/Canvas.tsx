@@ -256,9 +256,20 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
   const handleMouseUp = useCallback(() => {
     // If we were dragging a node, commit the final position to the store
     if (dragState.dragType === 'node' && dragState.draggedNodeId && dragState.currentNodePos) {
+      let finalPosition = dragState.currentNodePos;
+      
+      // Apply snap to grid if enabled
+      if (canvasState.snapToGrid) {
+        const gridSize = canvasState.gridSize;
+        finalPosition = {
+          x: Math.round(finalPosition.x / gridSize) * gridSize,
+          y: Math.round(finalPosition.y / gridSize) * gridSize
+        };
+      }
+      
       actions.updateNode(dragState.draggedNodeId, {
-        x: dragState.currentNodePos.x,
-        y: dragState.currentNodePos.y
+        x: finalPosition.x,
+        y: finalPosition.y
       });
     }
     
@@ -269,7 +280,7 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
       startPos: { x: 0, y: 0 },
       currentPos: { x: 0, y: 0 }
     });
-  }, [dragState, actions]);
+  }, [dragState, actions, canvasState.snapToGrid, canvasState.gridSize]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -335,8 +346,16 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
     if (clickedNode) {
       actions.startEditingNode(clickedNode.id);
     } else {
-      // Create a new node
-      actions.createNode(null, worldPoint, 'New Node');
+      // Create a new node with snap-to-grid if enabled
+      let nodePosition = worldPoint;
+      if (canvasState.snapToGrid) {
+        const gridSize = canvasState.gridSize;
+        nodePosition = {
+          x: Math.round(worldPoint.x / gridSize) * gridSize,
+          y: Math.round(worldPoint.y / gridSize) * gridSize
+        };
+      }
+      actions.createNode(null, nodePosition, 'New Node');
     }
   }, [currentMindMap, canvasState, actions]);
 
@@ -425,6 +444,7 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
   return (
     <div 
       ref={canvasRef}
+      data-canvas="true"
       className={`w-full h-full bg-gradient-to-br from-blue-50 to-indigo-100 relative overflow-hidden ${
         dragState.isDragging && dragState.dragType === 'canvas' 
           ? 'cursor-grabbing' 
@@ -484,6 +504,22 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
         </g>
       </svg>
 
+      {/* Fixed Grid Background - not transformed */}
+      {canvasState.showGrid && (
+        <div 
+          className="absolute inset-0 opacity-30 pointer-events-none"
+          data-export-hide="true"
+          style={{
+            backgroundImage: `
+              linear-gradient(to right, #d1d5db 1px, transparent 1px),
+              linear-gradient(to bottom, #d1d5db 1px, transparent 1px)
+            `,
+            backgroundSize: `${canvasState.gridSize * canvasState.zoom}px ${canvasState.gridSize * canvasState.zoom}px`,
+            backgroundPosition: `${canvasState.panX % (canvasState.gridSize * canvasState.zoom)}px ${canvasState.panY % (canvasState.gridSize * canvasState.zoom)}px`
+          }}
+        />
+      )}
+
       {/* Canvas content layer - this gets transformed */}
       <div
         className="absolute inset-0"
@@ -492,20 +528,6 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
           transformOrigin: 'top left'
         }}
       >
-        {/* Grid background */}
-        {canvasState.showGrid && (
-          <div 
-            className="absolute inset-0 opacity-20"
-            style={{
-              backgroundImage: `
-                linear-gradient(to right, #e5e7eb 1px, transparent 1px),
-                linear-gradient(to bottom, #e5e7eb 1px, transparent 1px)
-              `,
-              backgroundSize: `${canvasState.gridSize}px ${canvasState.gridSize}px`
-            }}
-          />
-        )}
-
         {/* Nodes */}
         <div className="relative">
           {currentMindMap.nodes.map(renderNode)}
@@ -517,14 +539,20 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
       <CanvasToolbar />
 
       {/* Canvas info overlay */}
-      <div className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/90 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-gray-600 shadow-lg">
+      <div 
+        className="absolute top-2 sm:top-4 left-2 sm:left-4 bg-white/90 backdrop-blur-sm rounded-lg px-2 sm:px-3 py-1 sm:py-2 text-xs sm:text-sm text-gray-600 shadow-lg"
+        data-export-hide="true"
+      >
         <div>Zoom: {Math.round(canvasState.zoom * 100)}%</div>
         <div className="hidden sm:block">Nodes: {currentMindMap.nodes.length}</div>
         <div className="hidden sm:block">Connections: {currentMindMap.connections.length}</div>
       </div>
 
       {/* Help text - Hidden on mobile, shown on larger screens */}
-      <div className="hidden lg:block absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-500 shadow-lg max-w-64">
+      <div 
+        className="hidden lg:block absolute bottom-4 left-4 bg-white/90 backdrop-blur-sm rounded-lg px-3 py-2 text-xs text-gray-500 shadow-lg max-w-64"
+        data-export-hide="true"
+      >
         <div>• Double-click: Create/Edit node</div>
         <div>• Drag nodes: Move nodes</div>
         <div>• Drag canvas: Navigate canvas</div>
@@ -543,7 +571,10 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
       </div>
 
       {/* Mobile help indicator */}
-      <div className="lg:hidden absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 text-xs text-gray-500 shadow-lg">
+      <div 
+        className="lg:hidden absolute bottom-2 left-2 bg-white/90 backdrop-blur-sm rounded-lg px-2 py-1 text-xs text-gray-500 shadow-lg"
+        data-export-hide="true"
+      >
         {connectionMode.active ? (
           <div className="text-blue-600 font-medium">🔗 Tap node to connect</div>
         ) : (

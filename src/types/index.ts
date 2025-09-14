@@ -57,7 +57,7 @@ export interface NodeStyle {
   borderRadius: number;
   fontSize: number;
   fontWeight: string;
-  shape: 'rectangle' | 'circle' | 'diamond' | 'hexagon';
+  shape: 'rectangle' | 'circle';
 }
 
 export interface ConnectionStyle {

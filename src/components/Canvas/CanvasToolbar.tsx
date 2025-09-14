@@ -1,5 +1,5 @@
 import React from 'react';
-import { Undo, Redo, RotateCcw, Trash2 } from 'lucide-react';
+import { Undo, Redo, RotateCcw, Trash2, Grid3X3, Magnet } from 'lucide-react';
 import { useMindMapStore } from '../../store/mindMapStore';
 const CanvasToolbar: React.FC = () => {
   const { canvasState, currentMindMap, selectedNodes, actions } = useMindMapStore();
@@ -25,45 +25,19 @@ const CanvasToolbar: React.FC = () => {
     actions.createNode(null, { x: centerX, y: centerY }, 'New Node');
   };
 
-  const handleZoomToFit = () => {
-    if (!currentMindMap || currentMindMap.nodes.length === 0) return;
-
-    // Calculate bounds of all nodes
-    const nodes = currentMindMap.nodes;
-    const minX = Math.min(...nodes.map(n => n.x));
-    const maxX = Math.max(...nodes.map(n => n.x + n.width));
-    const minY = Math.min(...nodes.map(n => n.y));
-    const maxY = Math.max(...nodes.map(n => n.y + n.height));
-
-    const contentWidth = maxX - minX;
-    const contentHeight = maxY - minY;
-    const padding = 100;
-
-    const scaleX = (window.innerWidth - padding * 2) / contentWidth;
-    const scaleY = (window.innerHeight - padding * 2) / contentHeight;
-    const newZoom = Math.min(scaleX, scaleY, 1);
-
-    const centerX = (minX + maxX) / 2;
-    const centerY = (minY + maxY) / 2;
-    const newPanX = window.innerWidth / 2 - centerX * newZoom;
-    const newPanY = window.innerHeight / 2 - centerY * newZoom;
-
-    actions.updateCanvas({
-      zoom: newZoom,
-      panX: newPanX,
-      panY: newPanY
-    });
-  };
-
   return (
-    <div className="absolute 
-      top-2 right-2 flex flex-col gap-1 p-1
-      sm:top-4 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:flex-row sm:gap-2 sm:p-2 sm:right-auto
+        <div className="absolute
+      top-4 right-2 flex flex-col items-center gap-1 p-1
+      sm:top-6 sm:left-1/2 sm:transform sm:-translate-x-1/2 sm:flex-row sm:items-center sm:gap-2 sm:p-2 sm:right-auto
       bg-white/90 backdrop-blur-sm rounded-xl shadow-md border border-gray-200 z-10 
-      max-h-[50vh] overflow-y-auto sm:max-h-none sm:overflow-y-visible sm:max-w-[95vw] sm:overflow-x-auto">
+      h-auto max-h-[200px] overflow-y-auto overflow-x-hidden
+      sm:h-auto sm:max-h-[80px] sm:overflow-y-hidden sm:overflow-x-auto sm:max-w-[90vw]
+      scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+      data-toolbar="true"
+    >
       
       {/* History Actions */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-1">
+      <div className="flex flex-col items-center gap-1 sm:flex-row sm:items-center sm:gap-1">
         <button
           onClick={actions.undo}
           className="p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center disabled:text-gray-400 disabled:cursor-not-allowed"
@@ -83,7 +57,7 @@ const CanvasToolbar: React.FC = () => {
       </div>
 
       {/* Divider */}
-      <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6"></div>
+      <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6 self-center"></div>
 
       {/* Add Node */}
       <button
@@ -96,10 +70,10 @@ const CanvasToolbar: React.FC = () => {
       </button>
 
       {/* Divider */}
-      <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6"></div>
+      <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6 self-center"></div>
 
       {/* Zoom Controls */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-1">
+      <div className="flex flex-col items-center gap-1 sm:flex-row sm:items-center sm:gap-1">
         <button
           onClick={actions.zoomOut}
           className="p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center"
@@ -126,35 +100,52 @@ const CanvasToolbar: React.FC = () => {
         </button>
       </div>
 
-      {/* Fit to Screen */}
-      <button
-        onClick={handleZoomToFit}
-        className="p-1.5 sm:p-2 text-gray-600 hover:bg-gray-100 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center"
-        title="Fit to Screen"
-      >
-        📐
-      </button>
-
-      {/* Divider */}
-      <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6"></div>
+      {/* Grid Controls */}
+      <div className="flex flex-col items-center gap-1 sm:flex-row sm:items-center sm:gap-1">
+        <button
+          onClick={() => actions.updateCanvas({ showGrid: !canvasState.showGrid })}
+          className={`p-1.5 sm:p-2 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center ${
+            canvasState.showGrid 
+              ? 'bg-blue-100 text-blue-600' 
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+          title={`${canvasState.showGrid ? 'Hide' : 'Show'} Grid`}
+        >
+          <Grid3X3 className="w-3 h-3 sm:w-4 sm:h-4" />
+        </button>
+        <button
+          onClick={() => actions.updateCanvas({ snapToGrid: !canvasState.snapToGrid })}
+          className={`p-1.5 sm:p-2 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center ${
+            canvasState.snapToGrid 
+              ? 'bg-blue-100 text-blue-600' 
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+          title={`${canvasState.snapToGrid ? 'Disable' : 'Enable'} Snap to Grid`}
+        >
+          <Magnet className="w-3 h-3 sm:w-4 sm:h-4" />
+        </button>
+      </div>
 
       {/* Delete Selected */}
       {selectedNodes.length > 0 && (
-        <button
-          onMouseDown={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-          }}
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            handleDeleteNodes();
-          }}
-          className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center"
-          title={`Delete ${selectedNodes.length} selected node(s)`}
-        >
-          <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
-        </button>
+        <>
+          <div className="h-px w-4 bg-gray-300 sm:w-px sm:h-6 self-center"></div>
+          <button
+            onMouseDown={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleDeleteNodes();
+            }}
+            className="p-1.5 sm:p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors touch-target min-w-[2.5rem] flex items-center justify-center"
+            title={`Delete ${selectedNodes.length} selected node(s)`}
+          >
+            <Trash2 className="w-3 h-3 sm:w-4 sm:h-4" />
+          </button>
+        </>
       )}
     </div>
   );

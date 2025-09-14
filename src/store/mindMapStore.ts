@@ -281,8 +281,8 @@ export const useMindMapStore = create<MindMapStore>()(
             text,
             x: position.x,
             y: position.y,
-            width: 150,
-            height: 60,
+            width: 160, // 8 grid units (8 * 20px = 160px)
+            height: 60,  // 3 grid units (3 * 20px = 60px)
             parentId,
             children: [],
             level: parentId ? (state.currentMindMap.nodes.find(n => n.id === parentId)?.level || 0) + 1 : 0,

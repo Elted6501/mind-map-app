@@ -38,7 +38,7 @@ const AppLayout: React.FC = () => {
         <Header />
 
         {/* Canvas Area */}
-        <div className="flex-1 relative overflow-hidden">
+        <div className="flex-1 relative overflow-hidden mx-6 mb-4 rounded-xl">
           <Canvas propertyPanelOpen={propertyPanelOpen} />
         </div>
       </div>
