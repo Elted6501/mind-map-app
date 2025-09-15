@@ -39,6 +39,12 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
     currentPos?: Point;
   }>({ active: false });
   const [isPanMode, setIsPanMode] = useState(false);
+  const [touchState, setTouchState] = useState<{
+    touches: React.Touch[];
+    initialDistance?: number;
+    initialZoom?: number;
+    initialPan?: { x: number; y: number };
+  }>({ touches: [] });
 
   // Handle connection creation
   const handleStartConnection = useCallback((nodeId: string) => {
@@ -67,6 +73,45 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
     const point = {
       x: e.clientX - rect.left,
       y: e.clientY - rect.top
+    };
+
+    // Handle connection mode
+    if (connectionMode.active && connectionMode.startNodeId) {
+      if (connectionMode.startNodeId !== nodeId) {
+        handleFinishConnection(nodeId);
+      }
+      return;
+    }
+
+    // Handle node selection and start dragging
+    if (!selectedNodes.includes(nodeId)) {
+      actions.selectNodes([nodeId]);
+    }
+    
+    const currentNode = currentMindMap?.nodes.find(n => n.id === nodeId);
+    if (currentNode) {
+      setDragState({
+        isDragging: true,
+        dragType: 'node',
+        startPos: point,
+        currentPos: point,
+        draggedNodeId: nodeId,
+        initialNodePos: { x: currentNode.x, y: currentNode.y }
+      });
+    }
+  }, [connectionMode, selectedNodes, actions, handleFinishConnection, currentMindMap]);
+
+  // Handle node touch start
+  const handleNodeTouchStart = useCallback((e: React.TouchEvent, nodeId: string) => {
+    e.stopPropagation();
+    
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const touch = e.touches[0];
+    const point = {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
     };
 
     // Handle connection mode
@@ -158,6 +203,159 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
       }
     }
   }, [isPanMode, currentMindMap, canvasState, actions, connectionMode, handleFinishConnection]);
+
+  // Handle double-tap for mobile
+  const [lastTap, setLastTap] = useState<{ time: number; pos: { x: number; y: number } } | null>(null);
+  
+  const handleTouchTap = useCallback((e: React.TouchEvent) => {
+    if (e.touches.length !== 1) return;
+    
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const touch = e.touches[0];
+    const screenPoint = {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top
+    };
+
+    const now = Date.now();
+    
+    if (lastTap && 
+        now - lastTap.time < 300 && 
+        Math.abs(screenPoint.x - lastTap.pos.x) < 20 && 
+        Math.abs(screenPoint.y - lastTap.pos.y) < 20) {
+      
+      // Double tap detected
+      e.preventDefault();
+      
+      const worldPoint = {
+        x: (screenPoint.x - canvasState.panX) / canvasState.zoom,
+        y: (screenPoint.y - canvasState.panY) / canvasState.zoom
+      };
+
+      // Check if double-tapping on a node to edit
+      const tappedNode = currentMindMap?.nodes.find(node => 
+        worldPoint.x >= node.x && 
+        worldPoint.x <= node.x + node.width &&
+        worldPoint.y >= node.y && 
+        worldPoint.y <= node.y + node.height
+      );
+
+      if (tappedNode) {
+        actions.startEditingNode(tappedNode.id);
+      } else {
+        // Create a new node with snap-to-grid if enabled
+        let nodePosition = worldPoint;
+        if (canvasState.snapToGrid) {
+          const gridSize = canvasState.gridSize;
+          nodePosition = {
+            x: Math.round(worldPoint.x / gridSize) * gridSize,
+            y: Math.round(worldPoint.y / gridSize) * gridSize
+          };
+        }
+        actions.createNode(null, nodePosition, 'New Node');
+      }
+      
+      setLastTap(null);
+    } else {
+      setLastTap({ time: now, pos: screenPoint });
+      
+      // Clear the tap after timeout
+      setTimeout(() => {
+        setLastTap(prev => prev?.time === now ? null : prev);
+      }, 300);
+    }
+  }, [lastTap, currentMindMap, canvasState, actions]);
+
+  // Handle touch events
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const touches = Array.from(e.touches);
+    
+    if (touches.length === 1) {
+      // Handle double-tap detection first
+      handleTouchTap(e);
+      
+      // Single touch - handle like mouse down
+      const touch = touches[0];
+      const screenPoint = {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+      
+      const worldPoint = {
+        x: (screenPoint.x - canvasState.panX) / canvasState.zoom,
+        y: (screenPoint.y - canvasState.panY) / canvasState.zoom
+      };
+
+      const screenCoords = {
+        x: touch.clientX,
+        y: touch.clientY
+      };
+
+      // Check if touching a node
+      const touchedNode = currentMindMap?.nodes.find(node => 
+        worldPoint.x >= node.x && 
+        worldPoint.x <= node.x + node.width &&
+        worldPoint.y >= node.y && 
+        worldPoint.y <= node.y + node.height
+      );
+
+      if (touchedNode) {
+        // Handle connection completion
+        if (connectionMode.active && connectionMode.startNodeId) {
+          handleFinishConnection(touchedNode.id);
+          return;
+        }
+        // Node touch is handled by handleNodeTouchStart
+        return;
+      } else {
+        // Cancel connection mode
+        if (connectionMode.active) {
+          setConnectionMode({ active: false });
+          return;
+        }
+
+        // Start canvas panning
+        actions.clearSelection();
+        setDragState({
+          isDragging: true,
+          dragType: 'canvas',
+          startPos: screenCoords,
+          currentPos: screenCoords
+        });
+      }
+    } else if (touches.length === 2) {
+      // Two finger touch - pinch to zoom
+      const touch1 = touches[0];
+      const touch2 = touches[1];
+      
+      const distance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + 
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+
+      setTouchState({
+        touches,
+        initialDistance: distance,
+        initialZoom: canvasState.zoom,
+        initialPan: { x: canvasState.panX, y: canvasState.panY }
+      });
+
+      // Clear any existing drag state
+      setDragState({
+        isDragging: false,
+        dragType: null,
+        startPos: { x: 0, y: 0 },
+        currentPos: { x: 0, y: 0 }
+      });
+    }
+
+    setTouchState(prev => ({ ...prev, touches }));
+  }, [currentMindMap, canvasState, actions, connectionMode, handleFinishConnection, handleTouchTap]);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     const rect = canvasRef.current?.getBoundingClientRect();
@@ -253,6 +451,129 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
     }
   }, [dragState, canvasState, connectionMode, actions]);
 
+  // Handle touch move
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault(); // Prevent scrolling
+    
+    const rect = canvasRef.current?.getBoundingClientRect();
+    if (!rect) return;
+
+    const touches = Array.from(e.touches);
+
+    if (touches.length === 1 && dragState.isDragging) {
+      // Single touch drag
+      const touch = touches[0];
+      const screenPoint = {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+
+      const screenCoords = {
+        x: touch.clientX,
+        y: touch.clientY
+      };
+
+      // Update connection mode cursor position
+      if (connectionMode.active) {
+        const worldPoint = {
+          x: (screenPoint.x - canvasState.panX) / canvasState.zoom,
+          y: (screenPoint.y - canvasState.panY) / canvasState.zoom
+        };
+        setConnectionMode(prev => ({ ...prev, currentPos: worldPoint }));
+      }
+
+      if (dragState.dragType === 'canvas') {
+        setDragState(prev => ({ ...prev, currentPos: screenCoords }));
+      } else {
+        setDragState(prev => ({ ...prev, currentPos: screenPoint }));
+      }
+
+      if (dragState.dragType === 'node' && dragState.draggedNodeId && dragState.initialNodePos) {
+        // Handle node dragging
+        const currentWorldX = (screenPoint.x - canvasState.panX) / canvasState.zoom;
+        const currentWorldY = (screenPoint.y - canvasState.panY) / canvasState.zoom;
+        
+        const startWorldX = (dragState.startPos.x - canvasState.panX) / canvasState.zoom;
+        const startWorldY = (dragState.startPos.y - canvasState.panY) / canvasState.zoom;
+        
+        const worldDeltaX = currentWorldX - startWorldX;
+        const worldDeltaY = currentWorldY - startWorldY;
+        
+        const newPosition = {
+          x: dragState.initialNodePos.x + worldDeltaX,
+          y: dragState.initialNodePos.y + worldDeltaY
+        };
+        
+        setDragState(prev => ({
+          ...prev,
+          currentNodePos: newPosition
+        }));
+      } else if (dragState.dragType === 'canvas') {
+        // Handle canvas panning
+        const deltaX = dragState.currentPos.x - dragState.startPos.x;
+        const deltaY = dragState.currentPos.y - dragState.startPos.y;
+        
+        const newPanX = canvasState.panX + deltaX;
+        const newPanY = canvasState.panY + deltaY;
+        
+        const { bounds } = canvasState;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+        
+        const minPanX = -(bounds.maxX * canvasState.zoom - viewportWidth / 2);
+        const maxPanX = -(bounds.minX * canvasState.zoom - viewportWidth / 2);
+        const minPanY = -(bounds.maxY * canvasState.zoom - viewportHeight / 2);
+        const maxPanY = -(bounds.minY * canvasState.zoom - viewportHeight / 2);
+        
+        const constrainedPanX = Math.max(minPanX, Math.min(maxPanX, newPanX));
+        const constrainedPanY = Math.max(minPanY, Math.min(maxPanY, newPanY));
+        
+        actions.updateCanvas({
+          panX: constrainedPanX,
+          panY: constrainedPanY
+        });
+        
+        setDragState(prev => ({
+          ...prev,
+          startPos: dragState.currentPos
+        }));
+      }
+    } else if (touches.length === 2 && touchState.initialDistance && touchState.initialZoom) {
+      // Two finger pinch to zoom
+      const touch1 = touches[0];
+      const touch2 = touches[1];
+      
+      const currentDistance = Math.sqrt(
+        Math.pow(touch2.clientX - touch1.clientX, 2) + 
+        Math.pow(touch2.clientY - touch1.clientY, 2)
+      );
+
+      const zoomFactor = currentDistance / touchState.initialDistance;
+      const newZoom = Math.max(0.1, Math.min(3, touchState.initialZoom * zoomFactor));
+
+      // Calculate the center point of the pinch
+      const centerX = (touch1.clientX + touch2.clientX) / 2;
+      const centerY = (touch1.clientY + touch2.clientY) / 2;
+
+      // Convert to canvas coordinates
+      const canvasCenterX = centerX - rect.left;
+      const canvasCenterY = centerY - rect.top;
+
+      // Adjust pan to keep the pinch center point stable
+      const zoomDelta = newZoom - canvasState.zoom;
+      const panAdjustX = -(canvasCenterX - canvasState.panX) * (zoomDelta / canvasState.zoom);
+      const panAdjustY = -(canvasCenterY - canvasState.panY) * (zoomDelta / canvasState.zoom);
+
+      actions.updateCanvas({
+        zoom: newZoom,
+        panX: canvasState.panX + panAdjustX,
+        panY: canvasState.panY + panAdjustY
+      });
+    }
+
+    setTouchState(prev => ({ ...prev, touches }));
+  }, [dragState, canvasState, connectionMode, actions, touchState]);
+
   const handleMouseUp = useCallback(() => {
     // If we were dragging a node, commit the final position to the store
     if (dragState.dragType === 'node' && dragState.draggedNodeId && dragState.currentNodePos) {
@@ -281,6 +602,65 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
       currentPos: { x: 0, y: 0 }
     });
   }, [dragState, actions, canvasState.snapToGrid, canvasState.gridSize]);
+
+  // Handle touch end
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    
+    const touches = Array.from(e.touches);
+
+    // If we were dragging a node, commit the final position to the store
+    if (dragState.dragType === 'node' && dragState.draggedNodeId && dragState.currentNodePos) {
+      let finalPosition = dragState.currentNodePos;
+      
+      // Apply snap to grid if enabled
+      if (canvasState.snapToGrid) {
+        const gridSize = canvasState.gridSize;
+        finalPosition = {
+          x: Math.round(finalPosition.x / gridSize) * gridSize,
+          y: Math.round(finalPosition.y / gridSize) * gridSize
+        };
+      }
+      
+      actions.updateNode(dragState.draggedNodeId, {
+        x: finalPosition.x,
+        y: finalPosition.y
+      });
+    }
+
+    // Reset states when no touches remain
+    if (touches.length === 0) {
+      setDragState({
+        isDragging: false,
+        dragType: null,
+        startPos: { x: 0, y: 0 },
+        currentPos: { x: 0, y: 0 }
+      });
+      setTouchState({ touches: [] });
+    } else {
+      // Update touch state with remaining touches
+      setTouchState(prev => ({ ...prev, touches }));
+      
+      // If switching from 2 fingers to 1 finger, start canvas pan
+      if (touches.length === 1 && touchState.touches.length === 2) {
+        const rect = canvasRef.current?.getBoundingClientRect();
+        if (rect) {
+          const touch = touches[0];
+          const screenCoords = {
+            x: touch.clientX,
+            y: touch.clientY
+          };
+          
+          setDragState({
+            isDragging: true,
+            dragType: 'canvas',
+            startPos: screenCoords,
+            currentPos: screenCoords
+          });
+        }
+      }
+    }
+  }, [dragState, actions, canvasState.snapToGrid, canvasState.gridSize, touchState.touches]);
 
   // Handle keyboard shortcuts
   useEffect(() => {
@@ -391,9 +771,10 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
         zoom={1} // Always 1 since scaling is handled by parent container
         onStartConnection={handleStartConnection}
         onNodeMouseDown={handleNodeMouseDown}
+        onNodeTouchStart={handleNodeTouchStart}
       />
     );
-  }, [selectedNodes, editingNode, handleStartConnection, handleNodeMouseDown, dragState]);
+  }, [selectedNodes, editingNode, handleStartConnection, handleNodeMouseDown, handleNodeTouchStart, dragState]);
 
   // Render a connection
   const renderConnection = useCallback((connection: Connection) => {
@@ -455,6 +836,9 @@ const Canvas: React.FC<{ propertyPanelOpen?: boolean }> = ({ propertyPanelOpen =
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       onDoubleClick={handleDoubleClick}
       onWheel={handleWheel}
       style={{ touchAction: 'none' }} // Prevent default touch behaviors for better control

@@ -10,6 +10,7 @@ interface NodeProps {
   isDragging?: boolean;
   onStartConnection?: (nodeId: string) => void;
   onNodeMouseDown?: (e: React.MouseEvent, nodeId: string) => void;
+  onNodeTouchStart?: (e: React.TouchEvent, nodeId: string) => void;
 }
 
 const Node: React.FC<NodeProps> = ({ 
@@ -19,7 +20,8 @@ const Node: React.FC<NodeProps> = ({
   zoom,
   isDragging = false,
   onStartConnection,
-  onNodeMouseDown
+  onNodeMouseDown,
+  onNodeTouchStart
 }) => {
   const { actions } = useMindMapStore();
   const [isHovered, setIsHovered] = useState(false);
@@ -47,6 +49,13 @@ const Node: React.FC<NodeProps> = ({
       onNodeMouseDown(e, node.id);
     }
   }, [node.id, onNodeMouseDown]);
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.stopPropagation();
+    if (onNodeTouchStart) {
+      onNodeTouchStart(e, node.id);
+    }
+  }, [node.id, onNodeTouchStart]);
 
   const getNodeTypeIcon = () => {
     switch (node.type) {
@@ -107,6 +116,7 @@ const Node: React.FC<NodeProps> = ({
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
     >
       {/* Node content */}
       <div 
