@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Edit2, Trash2, Save, X, Check } from 'lucide-react';
+import { Edit2, Trash2, X, Check } from 'lucide-react';
 import { useMindMapStore } from '../../store/mindMapStore';
 
 const Sidebar: React.FC = () => {
@@ -222,7 +222,7 @@ const Sidebar: React.FC = () => {
           <div className="bg-white rounded-lg p-6 max-w-sm mx-4">
             <h3 className="text-lg font-medium text-gray-900 mb-2">Delete Mind Map</h3>
             <p className="text-sm text-gray-600 mb-4">
-              Are you sure you want to delete "{currentMindMap?.title}"? This action cannot be undone.
+              Are you sure you want to delete &ldquo;{currentMindMap?.title}&rdquo;? This action cannot be undone.
             </p>
             <div className="flex space-x-3">
               <button

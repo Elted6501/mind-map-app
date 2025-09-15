@@ -105,7 +105,7 @@ child4,Detail B,300,100,80,40,#8b5cf6,rectangle,child1`;
           </h2>
           <div className="space-y-3 text-gray-700 text-sm sm:text-base">
             <p><strong>1.</strong> Prepare your data in JSON or CSV format following the structures below</p>
-            <p><strong>2.</strong> Go to your mind maps dashboard and click the "Import" button</p>
+            <p><strong>2.</strong> Go to your mind maps dashboard and click the &ldquo;Import&rdquo; button</p>
             <p><strong>3.</strong> Drag and drop your file or click to browse</p>
             <p><strong>4.</strong> Your mind map will be created automatically with nodes and connections</p>
           </div>
