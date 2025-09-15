@@ -105,8 +105,7 @@ src/
 │   │   ├── auth/          # Authentication endpoints
 │   │   ├── mindmaps/      # Mind map CRUD operations
 │   │   └── collaboration/ # Collaboration features
-│   ├── import-guide/      # Import documentation
-│   └── pricing/           # Pricing page
+│   └── import-guide/      # Import documentation
 ├── components/            # React components
 │   ├── Auth/             # Authentication forms
 │   ├── Canvas/           # Mind map canvas and nodes
