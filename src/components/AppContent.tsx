@@ -7,10 +7,18 @@ import AppLayout from './Layout/AppLayout';
 import ErrorBoundary from './UI/ErrorBoundary';
 import { useMindMapStore } from '@/store/mindMapStore';
 import { safeLoadMindMapsFromStorage } from '../utils/mindMapUtils';
+import '../utils/clearLocalStorage'; // Clear legacy localStorage on app load
 
 const AppContent: React.FC = () => {
   const { isAuthenticated, isLoading, user } = useAuth();
   const { currentMindMap, loading, error, actions } = useMindMapStore();
+
+  // Function to get mind map ID from URL
+  const getMindMapIdFromURL = useCallback(() => {
+    if (typeof window === 'undefined') return null;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('id');
+  }, []);
 
   const loadMindMaps = useCallback(async () => {
     // Double check authentication before making API calls
@@ -21,6 +29,18 @@ const AppContent: React.FC = () => {
     try {
       // Load from backend
       await actions.loadAllMindMaps();
+      
+      // Check if there's a specific mind map ID in the URL to load
+      const mindMapIdFromURL = getMindMapIdFromURL();
+      if (mindMapIdFromURL) {
+        try {
+          await actions.loadMindMap(mindMapIdFromURL);
+        } catch (error) {
+          console.error('Failed to load mind map from URL:', error);
+          // Remove the invalid ID from URL
+          window.history.replaceState({}, '', '/');
+        }
+      }
       
       // Also load from localStorage and merge
       const savedMindMaps = localStorage.getItem('mind_maps');
@@ -45,7 +65,7 @@ const AppContent: React.FC = () => {
     } catch (err) {
       console.error('Failed to load mind maps:', err);
     }
-  }, [actions, isAuthenticated, user]);
+  }, [actions, isAuthenticated, user, getMindMapIdFromURL]);
 
   useEffect(() => {
     if (isAuthenticated && user) {

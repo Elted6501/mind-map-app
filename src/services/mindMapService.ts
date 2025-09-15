@@ -56,12 +56,12 @@ export class MindMapService {
     return response.data;
   }
 
-  // Export a mind map (using Next.js API base URL)
+  // Export a mind map
   static async exportMindMap(id: string, format: string): Promise<Blob> {
-    const token = localStorage.getItem('auth_token');
     const response = await fetch(`/api/mindmaps/${id}/export/${format}`, {
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
     });
     
@@ -72,17 +72,13 @@ export class MindMapService {
     return response.blob();
   }
 
-  // Import a mind map (using Next.js API base URL)
+  // Import a mind map
   static async importMindMap(file: File): Promise<MindMap> {
     const formData = new FormData();
     formData.append('file', file);
 
-    const token = localStorage.getItem('auth_token');
     const response = await fetch('/api/mindmaps/import', {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
       body: formData,
     });
 

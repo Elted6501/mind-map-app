@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
-import { Plus, FileText, Lightbulb, Users, Zap } from 'lucide-react';
+import Link from 'next/link';
+import { Plus, FileText, Lightbulb, Users, Zap, Upload } from 'lucide-react';
 import { useMindMapStore } from '../../store/mindMapStore';
 
 const WelcomeScreen: React.FC = () => {
   const [isCreating, setIsCreating] = useState(false);
   const [newMapTitle, setNewMapTitle] = useState('');
+  const [isImporting, setIsImporting] = useState(false);
   const { actions, mindMaps, loading } = useMindMapStore();
 
   // Early return if loading or mindMaps is not ready
@@ -41,12 +43,51 @@ const WelcomeScreen: React.FC = () => {
     }
   };
 
+  const handleFileImport = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsImporting(true);
+    try {
+      // Use the import functionality from ImportService
+      const { importService } = await import('../../services/ImportService');
+      
+      let result;
+      const fileExtension = file.name.toLowerCase().split('.').pop();
+      
+      if (fileExtension === 'json') {
+        result = await importService.importFromJSON(file);
+      } else if (fileExtension === 'csv') {
+        result = await importService.importFromCSV(file);
+      } else {
+        throw new Error('Unsupported file format. Please use JSON or CSV files.');
+      }
+      
+      if (result.success && result.mindMapId) {
+        // Refresh the mind maps list to show the new imported map
+        await actions.loadAllMindMaps();
+        alert(`Mind map imported successfully! Created ${result.imported?.nodes || 0} nodes and ${result.imported?.connections || 0} connections.`);
+      } else {
+        const errorMessage = result.errors?.map(e => e.message).join(', ') || 'Unknown error';
+        console.error('Import failed:', result.errors);
+        alert('Import failed: ' + errorMessage);
+      }
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Failed to import file. Please check the file format.');
+    } finally {
+      setIsImporting(false);
+      // Reset the file input
+      event.target.value = '';
+    }
+  };
+
   const recentMindMaps = Array.isArray(mindMaps) ? mindMaps.slice(-3).reverse() : [];
 
   return (
-  <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-3 sm:p-4 md:p-6 overflow-y-auto">
-      <div className="max-w-6xl w-full">
-        {/* Header Section */}
+    <div className="h-screen bg-gradient-to-br from-blue-50 to-indigo-100 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-full p-3 sm:p-4 md:p-6">
+        <div className="max-w-6xl w-full">{/* Header Section */}
         <div className="text-center mb-6 sm:mb-8 md:mb-12">
           <div className="flex items-center justify-center mb-3 sm:mb-4 md:mb-6">
             <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 bg-blue-600 rounded-xl sm:rounded-2xl flex items-center justify-center">
@@ -112,6 +153,50 @@ const WelcomeScreen: React.FC = () => {
             )}
           </div>
 
+          {/* Import Mind Map Card */}
+          <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-md hover:shadow-lg transition-shadow">
+            <div className="flex items-center mb-3 sm:mb-4">
+              <Upload className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-purple-600 mr-2 sm:mr-3" />
+              <h3 className="text-sm sm:text-base md:text-lg font-semibold text-gray-900">Import Mind Map</h3>
+            </div>
+            <p className="text-xs sm:text-sm md:text-base text-gray-600 mb-3 sm:mb-4 leading-relaxed">
+              Import an existing mind map from JSON or CSV files.
+            </p>
+            
+            <div className="space-y-3">
+              <input
+                type="file"
+                accept=".json,.csv"
+                onChange={handleFileImport}
+                className="hidden"
+                id="import-file-input"
+                disabled={isImporting}
+              />
+              <label
+                htmlFor="import-file-input"
+                className={`w-full px-4 py-2.5 sm:py-3 md:py-3.5 text-sm sm:text-base bg-purple-600 text-white rounded-md sm:rounded-lg hover:bg-purple-700 active:bg-purple-800 transition-colors font-medium shadow-sm hover:shadow-md cursor-pointer flex items-center justify-center ${isImporting ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                {isImporting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Importing...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="w-4 h-4 mr-2" />
+                    Choose File to Import
+                  </>
+                )}
+              </label>
+              <p className="text-xs text-gray-500 text-center">
+                Supports JSON and CSV files
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Recent Mind Maps Section */}
+        <div className="mb-6 sm:mb-8 md:mb-12 px-2 sm:px-0">
           {/* Recent Mind Mapping Cards */}
           <div className="bg-white rounded-lg sm:rounded-xl p-4 sm:p-5 md:p-6 shadow-md hover:shadow-lg transition-shadow">
             <div className="flex items-center mb-3 sm:mb-4">
@@ -147,7 +232,7 @@ const WelcomeScreen: React.FC = () => {
         </div>
 
         {/* Features Grid */}
-        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-3 px-2 sm:px-0">
+        <div className="grid gap-3 sm:gap-4 md:gap-6 grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 px-2 sm:px-0">
           <div className="text-center p-3 sm:p-4 bg-white/50 rounded-lg sm:rounded-xl backdrop-blur-sm">
             <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-purple-100 rounded-md sm:rounded-lg flex items-center justify-center mx-auto mb-2 sm:mb-3">
               <Zap className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-purple-600" />
@@ -168,7 +253,20 @@ const WelcomeScreen: React.FC = () => {
             </p>
           </div>
           
-          <div className="text-center p-3 sm:p-4 bg-white/50 rounded-lg sm:rounded-xl backdrop-blur-sm xs:col-span-2 lg:col-span-1">
+          <Link 
+            href="/import-guide" 
+            className="text-center p-3 sm:p-4 bg-white/50 rounded-lg sm:rounded-xl backdrop-blur-sm hover:bg-white/70 transition-colors cursor-pointer block"
+          >
+            <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-blue-100 rounded-md sm:rounded-lg flex items-center justify-center mx-auto mb-2 sm:mb-3">
+              <Upload className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-blue-600" />
+            </div>
+            <h4 className="font-semibold text-gray-900 mb-1 sm:mb-2 text-xs sm:text-sm md:text-base">Import Guide</h4>
+            <p className="text-xs sm:text-sm text-gray-600 leading-relaxed">
+              Learn how to import from JSON and CSV files
+            </p>
+          </Link>
+          
+          <div className="text-center p-3 sm:p-4 bg-white/50 rounded-lg sm:rounded-xl backdrop-blur-sm">
             <div className="w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 bg-green-100 rounded-md sm:rounded-lg flex items-center justify-center mx-auto mb-2 sm:mb-3">
               <FileText className="w-4 h-4 sm:w-5 sm:h-5 md:w-6 md:h-6 text-green-600" />
             </div>
@@ -177,6 +275,7 @@ const WelcomeScreen: React.FC = () => {
               Save as images, PDFs, or share with others
             </p>
           </div>
+        </div>
         </div>
       </div>
     </div>

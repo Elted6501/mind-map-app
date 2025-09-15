@@ -2,13 +2,12 @@
 
 import { reportError } from './errorHandler';
 
-// Secure token management
+// Secure token management using sessionStorage instead of localStorage
 export class SecureTokenManager {
   private static readonly TOKEN_KEY = 'auth_token';
   private static readonly TOKEN_EXPIRY_KEY = 'token_expiry';
-  private static readonly LEGACY_TOKEN_KEY = 'token'; // For migration
   
-  // Set token with expiration
+  // Set token with expiration (using sessionStorage)
   static setToken(token: string, expiryHours: number = 24): void {
     try {
       // Validate token format (basic JWT validation)
@@ -18,23 +17,19 @@ export class SecureTokenManager {
       
       const expiryTime = Date.now() + (expiryHours * 60 * 60 * 1000);
       
-      localStorage.setItem(this.TOKEN_KEY, token);
-      localStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
-      
-      // Clean up legacy token
-      localStorage.removeItem(this.LEGACY_TOKEN_KEY);
+      sessionStorage.setItem(this.TOKEN_KEY, token);
+      sessionStorage.setItem(this.TOKEN_EXPIRY_KEY, expiryTime.toString());
     } catch (error) {
       reportError(error as Error, { context: 'setToken' });
       throw error;
     }
   }
   
-  // Get token if valid and not expired
+  // Get token if valid and not expired (from sessionStorage)
   static getToken(): string | null {
     try {
-      // First try to get from new secure storage
-      const token = localStorage.getItem(this.TOKEN_KEY);
-      const expiry = localStorage.getItem(this.TOKEN_EXPIRY_KEY);
+      const token = sessionStorage.getItem(this.TOKEN_KEY);
+      const expiry = sessionStorage.getItem(this.TOKEN_EXPIRY_KEY);
       
       if (token && expiry) {
         const expiryTime = parseInt(expiry, 10);
@@ -46,14 +41,6 @@ export class SecureTokenManager {
         }
       }
       
-      // Migration: check for legacy token
-      const legacyToken = localStorage.getItem(this.LEGACY_TOKEN_KEY);
-      if (legacyToken && this.isValidJWT(legacyToken)) {
-        // Migrate to new system with default expiry
-        this.setToken(legacyToken, 7 * 24); // 7 days default
-        return legacyToken;
-      }
-      
       return null;
     } catch (error) {
       reportError(error as Error, { context: 'getToken' });
@@ -62,11 +49,10 @@ export class SecureTokenManager {
     }
   }
   
-  // Clear token and expiry
+  // Clear token and expiry (from sessionStorage)
   static clearToken(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-    localStorage.removeItem(this.TOKEN_EXPIRY_KEY);
-    localStorage.removeItem(this.LEGACY_TOKEN_KEY); // Also clear legacy
+    sessionStorage.removeItem(this.TOKEN_KEY);
+    sessionStorage.removeItem(this.TOKEN_EXPIRY_KEY);
   }
   
   // Check if token exists and is valid

@@ -1,0 +1,121 @@
+{
+  "title": "Sample Project Planning Mind Map",
+  "description": "A template for project planning with structured phases",
+  "tags": ["template", "project-planning", "sample"],
+  "nodes": [
+    {
+      "id": "root",
+      "text": "Project Planning",
+      "x": 400,
+      "y": 300,
+      "width": 200,
+      "height": 80,
+      "color": "#3B82F6",
+      "shape": "rectangle",
+      "fontSize": 16,
+      "fontWeight": "bold"
+    },
+    {
+      "id": "planning",
+      "text": "Planning Phase",
+      "x": 200,
+      "y": 150,
+      "width": 150,
+      "height": 60,
+      "color": "#10B981",
+      "shape": "rectangle",
+      "fontSize": 14,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "execution",
+      "text": "Execution Phase",
+      "x": 400,
+      "y": 150,
+      "width": 150,
+      "height": 60,
+      "color": "#F59E0B",
+      "shape": "rectangle",
+      "fontSize": 14,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "review",
+      "text": "Review Phase",
+      "x": 600,
+      "y": 150,
+      "width": 150,
+      "height": 60,
+      "color": "#EF4444",
+      "shape": "rectangle",
+      "fontSize": 14,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "requirements",
+      "text": "Requirements Gathering",
+      "x": 100,
+      "y": 50,
+      "width": 140,
+      "height": 50,
+      "color": "#8B5CF6",
+      "shape": "circle",
+      "fontSize": 12,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "timeline",
+      "text": "Timeline Creation",
+      "x": 280,
+      "y": 50,
+      "width": 120,
+      "height": 50,
+      "color": "#8B5CF6",
+      "shape": "circle",
+      "fontSize": 12,
+      "fontWeight": "normal"
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn-root-planning",
+      "fromNodeId": "root",
+      "toNodeId": "planning",
+      "type": "straight",
+      "color": "#6b7280",
+      "width": 2
+    },
+    {
+      "id": "conn-root-execution",
+      "fromNodeId": "root",
+      "toNodeId": "execution",
+      "type": "straight",
+      "color": "#6b7280",
+      "width": 2
+    },
+    {
+      "id": "conn-root-review",
+      "fromNodeId": "root",
+      "toNodeId": "review",
+      "type": "straight",
+      "color": "#6b7280",
+      "width": 2
+    },
+    {
+      "id": "conn-planning-requirements",
+      "fromNodeId": "planning",
+      "toNodeId": "requirements",
+      "type": "straight",
+      "color": "#6b7280",
+      "width": 2
+    },
+    {
+      "id": "conn-planning-timeline",
+      "fromNodeId": "planning",
+      "toNodeId": "timeline",
+      "type": "straight",
+      "color": "#6b7280",
+      "width": 2
+    }
+  ]
+}

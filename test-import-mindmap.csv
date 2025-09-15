@@ -1,0 +1,11 @@
+Node ID,Text,Parent ID,X,Y,Width,Height,Color,Shape,Font Size,Font Weight
+root,Marketing Strategy,,400,300,180,70,#3B82F6,rectangle,16,bold
+market_research,Market Research,root,200,150,140,60,#10B981,rectangle,14,normal
+strategy,Strategy Development,root,400,150,160,60,#F59E0B,rectangle,14,normal
+execution,Execution,root,600,150,120,60,#EF4444,rectangle,14,normal
+competitor_analysis,Competitor Analysis,market_research,100,50,130,50,#8B5CF6,circle,12,normal
+customer_surveys,Customer Surveys,market_research,260,50,120,50,#8B5CF6,circle,12,normal
+pricing_strategy,Pricing Strategy,strategy,350,50,110,50,#F97316,circle,12,normal
+brand_positioning,Brand Positioning,strategy,480,50,130,50,#F97316,circle,12,normal
+campaign_launch,Campaign Launch,execution,550,50,120,50,#DC2626,circle,12,normal
+performance_tracking,Performance Tracking,execution,690,50,140,50,#DC2626,circle,12,normal

@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     await dbConnect();
     
     const body = await request.json();
-    const { title, description, isPublic, tags } = body;
+    const { title, description, isPublic, tags, nodes, connections } = body;
 
     // Validate required fields
     if (!title) {
@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
       userId: user._id,
       isPublic: isPublic || false,
       tags: tags || [],
-      nodes: [],
-      connections: [],
+      nodes: nodes || [],
+      connections: connections || [],
       canvas: {
         zoom: 1,
         panX: 0,

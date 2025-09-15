@@ -1,0 +1,195 @@
+{
+  "title": "Sample Project Planning Mind Map",
+  "description": "A test mind map for importing - demonstrates project planning workflow",
+  "nodes": [
+    {
+      "id": "root",
+      "text": "Project Planning",
+      "x": 400,
+      "y": 300,
+      "width": 200,
+      "height": 80,
+      "color": "#3B82F6",
+      "shape": "rectangle",
+      "fontSize": 16,
+      "fontWeight": "bold"
+    },
+    {
+      "id": "planning",
+      "text": "Planning Phase",
+      "x": 200,
+      "y": 150,
+      "width": 150,
+      "height": 60,
+      "color": "#10B981",
+      "shape": "rectangle",
+      "fontSize": 14,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "execution",
+      "text": "Execution Phase",
+      "x": 400,
+      "y": 150,
+      "width": 150,
+      "height": 60,
+      "color": "#F59E0B",
+      "shape": "rectangle",
+      "fontSize": 14,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "review",
+      "text": "Review Phase",
+      "x": 600,
+      "y": 150,
+      "width": 150,
+      "height": 60,
+      "color": "#EF4444",
+      "shape": "rectangle",
+      "fontSize": 14,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "requirements",
+      "text": "Requirements Gathering",
+      "x": 100,
+      "y": 50,
+      "width": 140,
+      "height": 50,
+      "color": "#8B5CF6",
+      "shape": "circle",
+      "fontSize": 12,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "timeline",
+      "text": "Timeline Creation",
+      "x": 280,
+      "y": 50,
+      "width": 120,
+      "height": 50,
+      "color": "#8B5CF6",
+      "shape": "circle",
+      "fontSize": 12,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "development",
+      "text": "Development",
+      "x": 350,
+      "y": 50,
+      "width": 100,
+      "height": 50,
+      "color": "#F97316",
+      "shape": "circle",
+      "fontSize": 12,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "testing",
+      "text": "Testing",
+      "x": 470,
+      "y": 50,
+      "width": 80,
+      "height": 50,
+      "color": "#F97316",
+      "shape": "circle",
+      "fontSize": 12,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "deployment",
+      "text": "Deployment",
+      "x": 570,
+      "y": 50,
+      "width": 100,
+      "height": 50,
+      "color": "#DC2626",
+      "shape": "circle",
+      "fontSize": 12,
+      "fontWeight": "normal"
+    },
+    {
+      "id": "feedback",
+      "text": "User Feedback",
+      "x": 690,
+      "y": 50,
+      "width": 110,
+      "height": 50,
+      "color": "#DC2626",
+      "shape": "circle",
+      "fontSize": 12,
+      "fontWeight": "normal"
+    }
+  ],
+  "connections": [
+    {
+      "id": "conn1",
+      "sourceId": "root",
+      "targetId": "planning",
+      "style": "solid",
+      "color": "#6B7280"
+    },
+    {
+      "id": "conn2",
+      "sourceId": "root",
+      "targetId": "execution",
+      "style": "solid",
+      "color": "#6B7280"
+    },
+    {
+      "id": "conn3",
+      "sourceId": "root",
+      "targetId": "review",
+      "style": "solid",
+      "color": "#6B7280"
+    },
+    {
+      "id": "conn4",
+      "sourceId": "planning",
+      "targetId": "requirements",
+      "style": "solid",
+      "color": "#6B7280"
+    },
+    {
+      "id": "conn5",
+      "sourceId": "planning",
+      "targetId": "timeline",
+      "style": "solid",
+      "color": "#6B7280"
+    },
+    {
+      "id": "conn6",
+      "sourceId": "execution",
+      "targetId": "development",
+      "style": "solid",
+      "color": "#6B7280"
+    },
+    {
+      "id": "conn7",
+      "sourceId": "execution",
+      "targetId": "testing",
+      "style": "solid",
+      "color": "#6B7280"
+    },
+    {
+      "id": "conn8",
+      "sourceId": "review",
+      "targetId": "deployment",
+      "style": "solid",
+      "color": "#6B7280"
+    },
+    {
+      "id": "conn9",
+      "sourceId": "review",
+      "targetId": "feedback",
+      "style": "solid",
+      "color": "#6B7280"
+    }
+  ],
+  "tags": ["project", "planning", "workflow", "test"],
+  "category": "Business",
+  "createdAt": "2025-09-14T10:00:00.000Z",
+  "updatedAt": "2025-09-14T10:00:00.000Z"
+}

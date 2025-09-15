@@ -8,10 +8,18 @@ import {
   Save,
   Download,
   ChevronDown,
-  MoreVertical
+  MoreVertical,
+  Search,
+  Upload,
+  Layout
 } from 'lucide-react';
 import { useMindMapStore } from '../../store/mindMapStore';
 import { useAuth } from '@/hooks/useAuth';
+import SearchComponent from '@/components/Search/SearchComponent';
+import SearchResults from '@/components/Search/SearchResults';
+import ImportComponent from '@/components/Import/ImportComponent';
+import TemplateBrowser from '@/components/Templates/TemplateBrowser';
+import { SearchResult } from '@/services/searchService';
 
 const Header: React.FC = () => {
   const { 
@@ -23,7 +31,27 @@ const Header: React.FC = () => {
 
   const { user, logout } = useAuth();
   const [mainDropdownOpen, setMainDropdownOpen] = useState(false);
+  const [searchModalOpen, setSearchModalOpen] = useState(false);
+  const [importModalOpen, setImportModalOpen] = useState(false);
+  const [templatesModalOpen, setTemplatesModalOpen] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+  const [searchResults, setSearchResults] = useState<SearchResult>({
+    mindMaps: [],
+    pagination: {
+      currentPage: 1,
+      totalPages: 0,
+      totalResults: 0,
+      limit: 20,
+      hasNextPage: false,
+      hasPrevPage: false
+    },
+    query: {
+      searchTerm: '',
+      sortBy: 'updatedAt',
+      sortOrder: 'desc'
+    }
+  });
+  const [isSearchLoading, setIsSearchLoading] = useState(false);
   const mainDropdownRef = useRef<HTMLDivElement>(null);
   const mainButtonRef = useRef<HTMLButtonElement>(null);
 
@@ -379,10 +407,52 @@ const Header: React.FC = () => {
     actions.togglePropertyPanel();
   };
 
+  const handleSearchResults = (results: SearchResult) => {
+    setSearchResults(results);
+  };
+
+  const handleSelectMindMap = (mindMapId: string) => {
+    setSearchModalOpen(false);
+    // Load the selected mind map
+    window.location.href = `/?id=${mindMapId}`;
+  };
+
+  const handleCloseSearchModal = () => {
+    setSearchModalOpen(false);
+    setSearchResults({
+      mindMaps: [],
+      pagination: {
+        currentPage: 1,
+        totalPages: 0,
+        totalResults: 0,
+        limit: 20,
+        hasNextPage: false,
+        hasPrevPage: false
+      },
+      query: {
+        searchTerm: '',
+        sortBy: 'updatedAt',
+        sortOrder: 'desc'
+      }
+    });
+  };
+
+  const handleImportSuccess = (mindMapId: string) => {
+    setImportModalOpen(false);
+    // Navigate to the imported mind map
+    window.location.href = `/?id=${mindMapId}`;
+  };
+
+  const handleTemplateSelect = (mindMapId: string) => {
+    setTemplatesModalOpen(false);
+    // Navigate to the new mind map created from template
+    window.location.href = `/?id=${mindMapId}`;
+  };
+
   return (
     <header className="relative bg-white backdrop-blur-sm border border-gray-200/60 rounded-xl shadow-lg px-3 sm:px-6 py-4 flex items-center justify-between h-16 mx-3 sm:mx-6 my-3 z-30 overflow-hidden">
       {/* Left Section */}
-      <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-shrink-0">
+      <div className="flex items-center space-x-2 sm:space-x-4 min-w-0 flex-1 max-w-[50%] sm:max-w-[60%]">
         <button
           onClick={handleBackToWelcome}
           className="flex items-center space-x-1 sm:space-x-2 px-2 sm:px-3 py-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
@@ -408,13 +478,22 @@ const Header: React.FC = () => {
 
         <div className="h-6 w-px bg-gray-300 hidden md:block flex-shrink-0" />
 
-        <h1 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 truncate min-w-0 max-w-[100px] sm:max-w-[200px] md:max-w-none">
+        <h1 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 truncate min-w-0 flex-1 max-w-full" title={currentMindMap?.title || 'Mind Map'}>
           {currentMindMap?.title || 'Mind Map'}
         </h1>
       </div>
 
       {/* Center Section - Main Actions Dropdown */}
       <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+        <button
+          onClick={() => setSearchModalOpen(true)}
+          className="px-2 sm:px-3 py-2 rounded-lg transition-colors flex-shrink-0 text-xs sm:text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+          title="Search Mind Maps"
+        >
+          <Search className="w-4 h-4 sm:hidden" />
+          <span className="hidden sm:inline">Search</span>
+        </button>
+
         <button
           onClick={handleTogglePropertyPanel}
           className={`px-2 sm:px-3 py-2 rounded-lg transition-colors flex-shrink-0 text-xs sm:text-sm font-medium ${
@@ -467,6 +546,38 @@ const Header: React.FC = () => {
                 <div>
                   <div className="font-medium">Save Mind Map</div>
                   <div className="text-xs text-gray-500">Ctrl+S</div>
+                </div>
+              </button>
+
+              <div className="border-t border-gray-200 my-1"></div>
+
+              {/* Import Option */}
+              <button
+                onClick={() => {
+                  setImportModalOpen(true);
+                  setMainDropdownOpen(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-3"
+              >
+                <Upload className="w-4 h-4 text-green-600" />
+                <div>
+                  <div className="font-medium">Import Mind Map</div>
+                  <div className="text-xs text-gray-500">JSON, CSV, or text files</div>
+                </div>
+              </button>
+
+              {/* Templates Option */}
+              <button
+                onClick={() => {
+                  setTemplatesModalOpen(true);
+                  setMainDropdownOpen(false);
+                }}
+                className="w-full px-4 py-3 text-left text-sm text-gray-700 hover:bg-gray-100 transition-colors flex items-center gap-3"
+              >
+                <Layout className="w-4 h-4 text-purple-600" />
+                <div>
+                  <div className="font-medium">Browse Templates</div>
+                  <div className="text-xs text-gray-500">Start from pre-built templates</div>
                 </div>
               </button>
 
@@ -551,6 +662,71 @@ const Header: React.FC = () => {
           )}
         </div>
       </div>
+
+      {/* Search Modal */}
+      {searchModalOpen && createPortal(
+        <div className="fixed inset-0 overflow-y-auto" style={{ zIndex: 100000 }}>
+          <div className="flex min-h-screen items-center justify-center p-4">
+            {/* Backdrop */}
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+              onClick={handleCloseSearchModal}
+            />
+            
+            {/* Modal Content */}
+            <div className="relative bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+              {/* Modal Header */}
+              <div className="flex items-center justify-between p-6 border-b border-gray-200">
+                <h2 className="text-xl font-semibold text-gray-900">
+                  Search Mind Maps
+                </h2>
+                <button
+                  onClick={handleCloseSearchModal}
+                  className="text-gray-400 hover:text-gray-600 transition-colors"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              
+              {/* Modal Body */}
+              <div className="p-6 overflow-y-auto max-h-[calc(90vh-120px)]">
+                <div className="mb-6">
+                  <SearchComponent
+                    onResults={handleSearchResults}
+                    onLoading={setIsSearchLoading}
+                    className="w-full"
+                  />
+                </div>
+                
+                <SearchResults
+                  results={searchResults}
+                  onSelectMindMap={handleSelectMindMap}
+                  loading={isSearchLoading}
+                />
+              </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Import Modal */}
+      {importModalOpen && (
+        <ImportComponent
+          onImportSuccess={handleImportSuccess}
+          onClose={() => setImportModalOpen(false)}
+        />
+      )}
+
+      {/* Templates Modal */}
+      {templatesModalOpen && (
+        <TemplateBrowser
+          onTemplateSelect={handleTemplateSelect}
+          onClose={() => setTemplatesModalOpen(false)}
+        />
+      )}
     </header>
   );
 };
