@@ -3,12 +3,8 @@ name: Linter and Build Workflow
 on:
   push:
     branches:
-      - finance
-      - human-resources
-      - sales
-      - inventory
-      - maintenance
       - main
+      - develop
 jobs:
   lint:
     runs-on: ubuntu-latest
