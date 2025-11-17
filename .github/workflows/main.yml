@@ -1,9 +1,13 @@
-name: Lint and Deploy
+name: Lint and build
 
 on:
   pull_request:
     branches:
       - main
+      - dev
+  push:
+    branches:
+      - dev
 jobs:
   lint:
     runs-on: ubuntu-latest
@@ -17,16 +21,20 @@ jobs:
         run: npm ci
       - name: Run linter
         run: npm run lint
-
-  deploy:
-    needs: lint
+  build:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    needs: lint
+    env:
+        MONGODB_URI: ${{ secrets.MONGODB_URI }}
+        JWT_SECRET: ${{ secrets.JWT_SECRET }}
+        JWT_EXPIRE: ${{ secrets.JWT_EXPIRE }}
     steps:
       - uses: actions/checkout@v4
-      - name: Install Vercel CLI
-        run: npm install -g vercel
-      - name: Deploy to Vercel
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-        run: vercel --prod --token $VERCEL_TOKEN --confirm
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+      - name: Install dependencies
+        run: npm ci
+      - name: Build project
+        run: npm run build
