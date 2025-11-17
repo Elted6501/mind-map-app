@@ -25,7 +25,6 @@ jobs:
         MONGODB_URI: ${{ secrets.MONGODB_URI }}
         JWT_SECRET: ${{ secrets.JWT_SECRET }}
         JWT_EXPIRE: ${{ secrets.JWT_EXPIRE }}
-        NODE_ENV: ${{ secrets.NODE_ENV }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up Node.js
