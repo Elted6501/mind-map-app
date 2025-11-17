@@ -219,218 +219,44 @@ npm run lint        # Run ESLint
 3. Update TypeScript types in `/src/types/`
 4. Test with both authenticated and guest users
 
-## 📋 Unit Test Deployment Process
+## 📋 Deployment & Testing
 
 ### Branching Strategy
 
-We use a **two-branch strategy** for organized development:
+We use a **two-branch strategy** (`main`/`dev`) with feature branches:
 
 ```
-main (production)
-  └── dev (development/integration)
-       ├── feature/feature-name
-       ├── bugfix/bug-description
-       └── test/test-description
+main (production) → dev (development) → feature/*, bugfix/*, test/*
 ```
 
-- **`main`**: Production-ready code only. Protected with strict merge rules.
-- **`dev`**: Integration branch for all development work.
-- **`feature/*`**: Feature branches created from `dev`.
-- **`bugfix/*`**: Bug fix branches created from `dev`.
-- **`test/*`**: Branches for adding or updating unit tests.
+- **`main`**: Production-ready code (2 approvals required)
+- **`dev`**: Integration branch (1 approval required)
+- **`feature/*`**, **`bugfix/*`**, **`test/*`**: Work branches
 
-### Merge Rules
+### Quick Workflow
 
-#### Main Branch Protection
-- ✅ **2 approvals required** before merging
-- ✅ All GitHub Actions workflows must pass (lint, build, tests)
-- ✅ Unit test coverage must be ≥80%
-- ✅ No merge conflicts
-- ✅ Code owners must review
-- ❌ Direct commits prohibited
-
-#### Dev Branch Protection
-- ✅ **1 approval required** before merging
-- ✅ All GitHub Actions workflows must pass (lint, build, tests)
-- ✅ Build must succeed
-- ❌ Self-approval not permitted
-
-### GitHub Actions Workflows
-
-Our CI/CD pipeline automatically runs on every pull request and push to `dev`/`main`:
-
-1. **Lint Job**: Checks code style and formatting
-2. **Build Job**: Verifies the project builds successfully
-3. **Test Job**: Runs unit tests and generates coverage reports (future)
-
-View workflow status in the "Actions" tab of the repository.
-
-### Development Workflow
-
-#### 1. Create a Feature/Test Branch
 ```bash
-# Switch to dev and get latest changes
-git checkout dev
-git pull origin dev
-
-# Create your branch
-git checkout -b test/add-canvas-unit-tests
-# or
-git checkout -b feature/new-feature-name
-```
-
-#### 2. Make Changes and Write Tests
-```bash
-# Make your changes and add unit tests
-
-# Check for linting issues
-npm run lint
-
-# Build the project to verify no errors
-npm run build
-```
-
-**Note**: Unit tests will run automatically via GitHub Actions when you push your branch and create a pull request.
-
-#### 3. Commit Your Changes
-```bash
-# Stage changes
-git add .
-
-# Commit with descriptive message
-git commit -m "test: add unit tests for Canvas component"
-```
-
-**Commit Message Conventions:**
-- `test:` - Adding or updating tests
-- `feat:` - New feature
-- `fix:` - Bug fix
-- `docs:` - Documentation changes
-- `refactor:` - Code refactoring
-- `chore:` - Maintenance tasks
-
-#### 4. Push and Create Pull Request
-```bash
-# Push your branch
-git push origin test/add-canvas-unit-tests
-```
-
-Then on GitHub:
-1. Navigate to the repository
-2. Click "Pull requests" → "New pull request"
-3. Set base to `dev`, compare to your branch
-4. Fill out the PR template:
-   - Description of changes
-   - Type of change (tests, feature, fix)
-   - Testing checklist
-   - Related issues
-
-#### 5. Code Review Process
-- Request at least 1 reviewer for `dev` merges
-- Address all feedback and comments
-- **Ensure all GitHub Actions checks pass** (visible in PR status)
-- Resolve merge conflicts if any
-- Monitor the Actions tab for workflow results
-
-#### 6. Merge to Dev
-- Once approved, merge using "Squash and merge"
-- Delete the feature branch after merge
-
-#### 7. Deploy to Main (Production)
-**Only when dev is stable and ready for release:**
-
-1. Create PR from `dev` to `main`
-2. Title: "Release v1.x.x - [description]"
-3. Requires **2 approvals**
-4. Complete pre-release checklist:
-   - [ ] All tests passing
-   - [ ] Manual testing completed
-   - [ ] Documentation updated
-   - [ ] Version bumped in package.json
-   - [ ] Changelog updated
-
-5. After merge, tag the release:
-```bash
-git checkout main
-git pull origin main
-git tag -a v1.0.0 -m "Release version 1.0.0"
-git push origin v1.0.0
-```
-
-### Testing Best Practices
-
-1. **Write Tests First** (TDD when possible)
-2. **Test Behavior, Not Implementation**
-3. **Keep Tests Fast** - Unit tests should run quickly
-4. **Use Descriptive Names** - `it('should render error when API fails')`
-5. **Mock External Dependencies** - APIs, databases, file systems
-6. **Maintain 80%+ Coverage**
-7. **Test Edge Cases** - Empty arrays, null values, boundaries
-
-### Common Issues and Solutions
-
-#### GitHub Actions Workflow Failures
-```bash
-# Check the Actions tab in GitHub for detailed logs
-# Common fixes:
-
-# 1. Lint failures - fix code style issues
-npm run lint
-
-# 2. Build failures - verify locally
-npm run build
-
-# 3. Clear cache and reinstall if needed
-rm -rf node_modules
-npm install
-```
-
-#### Merge Conflicts
-```bash
-# Update your branch with latest dev
-git checkout dev
-git pull origin dev
-git checkout your-branch
-git merge dev
-# Resolve conflicts, then:
-git add .
-git commit -m "resolve: merge conflicts"
-git push origin your-branch
-```
-
-#### CI/CD Pipeline Failures
-1. **Check GitHub Actions logs** in the "Actions" tab
-2. Look for specific job failures (lint, build, test)
-3. Run `npm run lint` and `npm run build` locally with Node.js 18+
-4. Verify all dependencies in package.json
-5. Check for environment-specific issues
-6. Ensure required secrets are set in repository settings
-
-#### Branch Protection Preventing Push
-```bash
-# Never push directly to protected branches
-# Always use feature branches and PRs
+# 1. Create branch from dev
+git checkout dev && git pull origin dev
 git checkout -b feature/your-feature
-# Make changes
+
+# 2. Make changes and commit
+npm run lint        # Check code style
+npm run build       # Verify build
+git add . && git commit -m "feat: your feature"
+
+# 3. Push and create PR
 git push origin feature/your-feature
-# Then create PR on GitHub
 ```
 
-### Code Review Guidelines
+### GitHub Actions
 
-**What Reviewers Should Check:**
-- [ ] Tests are comprehensive and cover edge cases
-- [ ] Test names clearly describe what is tested
-- [ ] Code is clean and well-organized
-- [ ] No hardcoded values in tests
-- [ ] Proper error handling
-- [ ] Documentation updated if needed
-- [ ] No console errors or warnings
+All PRs automatically run:
+- ✅ **Lint**: Code style checks
+- ✅ **Build**: Compilation verification
+- ✅ **Tests**: Unit tests (managed via workflows)
 
-**Review Response Times:**
-- Standard PRs: 24-48 hours
-- Urgent fixes: 4-8 hours
-- Minor changes: 12-24 hours
+**📖 For complete deployment process, merge rules, testing guidelines, and troubleshooting, see [DEPLOYMENT.md](./DEPLOYMENT.md)**
 
 ## 🤝 Contributing
 
