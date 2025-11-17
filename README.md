@@ -205,6 +205,8 @@ npm start           # Start production server
 npm run lint        # Run ESLint
 ```
 
+**Note**: Unit tests are managed through GitHub Actions workflows and run automatically on pull requests and pushes to `dev` and `main` branches.
+
 ### Database Setup
 1. Create MongoDB Atlas account
 2. Create new cluster
@@ -216,6 +218,45 @@ npm run lint        # Run ESLint
 2. Add API routes in `/src/app/api/`
 3. Update TypeScript types in `/src/types/`
 4. Test with both authenticated and guest users
+
+## 📋 Deployment & Testing
+
+### Branching Strategy
+
+We use a **two-branch strategy** (`main`/`dev`) with feature branches:
+
+```
+main (production) → dev (development) → feature/*, bugfix/*, test/*
+```
+
+- **`main`**: Production-ready code (2 approvals required)
+- **`dev`**: Integration branch (1 approval required)
+- **`feature/*`**, **`bugfix/*`**, **`test/*`**: Work branches
+
+### Quick Workflow
+
+```bash
+# 1. Create branch from dev
+git checkout dev && git pull origin dev
+git checkout -b feature/your-feature
+
+# 2. Make changes and commit
+npm run lint        # Check code style
+npm run build       # Verify build
+git add . && git commit -m "feat: your feature"
+
+# 3. Push and create PR
+git push origin feature/your-feature
+```
+
+### GitHub Actions
+
+All PRs automatically run:
+- ✅ **Lint**: Code style checks
+- ✅ **Build**: Compilation verification
+- ✅ **Tests**: Unit tests (managed via workflows)
+
+**📖 For complete deployment process, merge rules, testing guidelines, and troubleshooting, see [DEPLOYMENT.md](./DEPLOYMENT.md)**
 
 ## 🤝 Contributing
 
